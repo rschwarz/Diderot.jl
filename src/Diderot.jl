@@ -1,5 +1,7 @@
 module Diderot
 
-greet() = print("Hello World!")
+## Specific Implementation for problem classes.
 
-end # module
+include("knapsack.jl")
+
+end
