@@ -45,7 +45,7 @@ function Model(instance::Instance)
         end
     end
 
-    return Model(initial, transition)
+    return Model(variables, initial, transition)
 end
 
 ### Decision Diagram Implementation
@@ -69,13 +69,42 @@ struct DecisionDiagram
     # distance::Dict{Node, Float64}
     # predecessor::Dict{Node, Node}
 
-    function DecisionDiagram(initial)
-        root = Node(0, initial)
-        return new(Set[root], Dict())
+    function DecisionDiagram()
+        return new(Vector(), Dict())
     end
 end
 
 function topdown(model)
-    dd = DecisionDiagram(model.initial())
-    # TODO
+    dd = DecisionDiagram()
+
+    # Root node
+    root = Node(1, model.initial())
+    push!(dd.layers, [root])
+
+    # Intermediate layers
+    for last_layer, variable in enumerate(model.variables())
+        current_layer = last_layer + 1
+        layer = Set{Node}([])
+
+        for node in dd.layers[last_layer]
+            for decision in (false, true)
+                next = model.transition(node.state, variable, decision)
+                next === Infeasible() && continue
+
+                new_node = Node(current_layer, next.state)
+                push!(layer, new_node)
+
+                arc = Arc(node, decision, next.value)
+                inarcs = get!(dd.inarcs, new_node, Arc[])
+                push!(inarcs, arc)
+            end
+        end
+
+        push!(dd.layers, layer)
+    end
+
+    # Terminal node
+    # TODO: Merge all states from last layer
+
+    return dd
 end
