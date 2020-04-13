@@ -21,10 +21,14 @@ function variables(instance::Instance)
     return 1:length(instance)
 end
 
-function initial(instance::Instance)
+function initial_state(instance::Instance)
     return State(instance.capacity)
 end
-    
+
+function terminal_state(instance::Instance)
+    return State(-1)
+end
+
 function transition(instance::Instance, state::State, variable::Int, decision::Bool)
     if decision
         slack = state.capacity - instance.weights[variable]
@@ -64,11 +68,11 @@ struct DecisionDiagram
     end
 end
 
-function topdown(instance)
+function top_down(instance)
     dd = DecisionDiagram()
 
     # Root node
-    root = Node(1, initial(instance))
+    root = Node(1, initial_state(instance))
     push!(dd.layers, [root])
 
     # Intermediate layers
@@ -93,8 +97,13 @@ function topdown(instance)
         push!(dd.layers, layer)
     end
 
-    # Terminal node
-    # TODO: Merge all states from last layer
+    # Terminal node (last layer merged to one)
+    terminal = terminal_state(instance)
+    inarcs = Arc[]
+    for node in dd.layers[end]
+        append!(inarcs, dd.inarcs[node])
+    end
+    dd.layers[end] = [terminal]
 
     return dd
 end
