@@ -122,8 +122,8 @@ function longest_path(dd::DecisionDiagram)
     # Search layer by layer.
     for layer in dd.layers[2:end]
         for node in layer
-            @assert node ∉ distance && node ∉ predecessor
-            dist, pred = Inf, nothing
+            @assert !haskey(distance, node) && !haskey(predecessor, node)
+            dist, pred = -Inf, nothing
             for arc in dd.inarcs[node]
                 newdist = distance[arc.tail] + arc.value
                 if newdist > dist
@@ -140,10 +140,10 @@ function longest_path(dd::DecisionDiagram)
     terminal = only(dd.layers[end])
     node, decisions = terminal, []
     while node != root
-        arc = pred[node]
-        pushfirst![decisions, arc.decision]
+        arc = predecessor[node]
+        pushfirst!(decisions, arc.decision)
         node = arc.tail
     end
 
-    return Solution(decision, distance[terminal])
+    return Solution(decisions, distance[terminal])
 end
