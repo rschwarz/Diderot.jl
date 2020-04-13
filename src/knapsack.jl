@@ -1,8 +1,8 @@
 ### Knapsack Model
 
 struct Instance
-    values::Float64
-    weights::Int
+    values::Vector{Float64}
+    weights::Vector{Int}
     capacity::Int
 end
 
@@ -18,7 +18,7 @@ struct Transition
 end
 
 function variables(instance::Instance)
-    return 1:length(instance)
+    return 1:length(instance.values)
 end
 
 function initial_state(instance::Instance)
