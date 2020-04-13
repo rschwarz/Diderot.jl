@@ -69,7 +69,7 @@ function top_down(instance)
 
     # Root node
     root = Node(1, initial_state(instance))
-    push!(dd.layers, [root])
+    push!(dd.layers, Set([root]))
 
     # Intermediate layers
     for (last_layer, variable) in enumerate(variables(instance))
@@ -94,12 +94,13 @@ function top_down(instance)
     end
 
     # Terminal node (last layer merged to one)
-    terminal = terminal_state(instance)
+    terminal = Node(length(dd.layers), terminal_state(instance))
     inarcs = Arc[]
     for node in dd.layers[end]
         append!(inarcs, dd.inarcs[node])
     end
-    dd.layers[end] = [terminal]
+    dd.inarcs[terminal] = inarcs
+    dd.layers[end] = Set([terminal])
 
     return dd
 end
