@@ -72,7 +72,7 @@ function topdown(instance)
     push!(dd.layers, [root])
 
     # Intermediate layers
-    for last_layer, variable in enumerate(variables(instance))
+    for (last_layer, variable) in enumerate(variables(instance))
         current_layer = last_layer + 1
         layer = Set{Node}([])
 
