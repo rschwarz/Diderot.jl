@@ -1,6 +1,6 @@
-using Diderot
 using Test
+using Diderot
 
-@testset "Diderot.jl" begin
-    # Write your own tests here.
+@testset "Knapsack" begin
+    include("knapsack.jl")
 end
