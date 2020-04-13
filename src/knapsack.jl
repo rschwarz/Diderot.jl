@@ -59,10 +59,6 @@ struct DecisionDiagram
     layers::Vector{Set{Node}}
     inarcs::Dict{Node, Vector{Arc}}
 
-    # on-the-fly shortest path
-    # distance::Dict{Node, Float64}
-    # predecessor::Dict{Node, Node}
-
     function DecisionDiagram()
         return new(Vector(), Dict())
     end
@@ -106,4 +102,46 @@ function top_down(instance)
     dd.layers[end] = [terminal]
 
     return dd
+end
+
+struct Solution
+    decisions::Vector{Bool}
+    objective::Float64
+end
+
+function longest_path(dd::DecisionDiagram)
+    distance = Dict{Node, Float64}()
+    predecessor = Dict{Node, Arc}()
+
+    # Start from root, find path to terminal.
+    root = only(dd.layers[1])
+    distance[root] = 0.0
+
+    # Search layer by layer.
+    for layer in dd.layers[2:end]
+        for node in layer
+            @assert node ∉ distance && node ∉ predecessor
+            dist, pred = Inf, nothing
+            for arc in dd.inarcs[node]
+                newdist = distance[arc.tail] + arc.value
+                if newdist > dist
+                    dist = newdist
+                    pred = arc
+                end
+            end
+            distance[node] = dist
+            predecessor[node] = pred
+        end
+    end
+
+    # Collect path in reverse, from terminal.
+    terminal = only(dd.layers[end])
+    node, decisions = terminal, []
+    while node != root
+        arc = pred[node]
+        pushfirst![decisions, arc.decision]
+        node = arc.tail
+    end
+
+    return Solution(decision, distance[terminal])
 end
