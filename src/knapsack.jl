@@ -98,6 +98,7 @@ function top_down(instance)
     inarcs = Arc[]
     for node in dd.layers[end]
         append!(inarcs, dd.inarcs[node])
+        delete!(dd.inarcs, node)
     end
     dd.inarcs[terminal] = inarcs
     dd.layers[end] = Set([terminal])
