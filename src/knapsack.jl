@@ -17,35 +17,25 @@ struct Transition
     value::Float64
 end
 
-struct Model
-    variables   # static order!
-    initial     # state
-    transition
+function variables(instance::Instance)
+    return 1:length(instance)
 end
 
-function Model(instance::Instance)
-    function variables()
-        return 1:length(instance)
-    end
-
-    function initial()
-        return State(instance.capacity)
-    end
+function initial(instance::Instance)
+    return State(instance.capacity)
+end
     
-    function transition(state::State, variable::Int, decision::Bool)
-        if decision
-            slack = state.capacity - instance.weights[variable]
-            if slack >= 0
-                return Transition(State(slack), instance.values[variable])
-            else
-                return Infeasible()
-            end
+function transition(instance::Instance, state::State, variable::Int, decision::Bool)
+    if decision
+        slack = state.capacity - instance.weights[variable]
+        if slack >= 0
+            return Transition(State(slack), instance.values[variable])
         else
-            return Transition(state, 0.0)
+            return Infeasible()
         end
+    else
+        return Transition(state, 0.0)
     end
-
-    return Model(variables, initial, transition)
 end
 
 ### Decision Diagram Implementation
@@ -74,21 +64,21 @@ struct DecisionDiagram
     end
 end
 
-function topdown(model)
+function topdown(instance)
     dd = DecisionDiagram()
 
     # Root node
-    root = Node(1, model.initial())
+    root = Node(1, initial(instance))
     push!(dd.layers, [root])
 
     # Intermediate layers
-    for last_layer, variable in enumerate(model.variables())
+    for last_layer, variable in enumerate(variables(instance))
         current_layer = last_layer + 1
         layer = Set{Node}([])
 
         for node in dd.layers[last_layer]
             for decision in (false, true)
-                next = model.transition(node.state, variable, decision)
+                next = transition(instance, node.state, variable, decision)
                 next === Infeasible() && continue
 
                 new_node = Node(current_layer, next.state)
