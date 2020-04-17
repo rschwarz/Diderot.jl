@@ -57,10 +57,11 @@ end
 
 struct DecisionDiagram
     layers::Vector{Set{Node}}
-    inarcs::Dict{Node, Vector{Arc}}
+    inarc::Dict{Node, Arc}
+    distance::Dict{Node, Float64}
 
     function DecisionDiagram()
-        return new(Vector(), Dict())
+        return new(Vector(), Dict(), Dict())
     end
 end
 
@@ -70,37 +71,46 @@ function top_down(instance)
     # Root node
     root = Node(1, initial_state(instance))
     push!(dd.layers, Set([root]))
+    dd.distance[root] = 0.0
 
     # Intermediate layers
     for (last_layer, variable) in enumerate(variables(instance))
         current_layer = last_layer + 1
         layer = Set{Node}([])
 
+        # Collect new states, keep only "best" arcs.
         for node in dd.layers[last_layer]
             for decision in (false, true)
                 next = transition(instance, node.state, variable, decision)
                 next === Infeasible() && continue
 
-                new_node = Node(current_layer, next.state)
-                push!(layer, new_node)
-
                 arc = Arc(node, decision, next.value)
-                inarcs = get!(dd.inarcs, new_node, Arc[])
-                push!(inarcs, arc)
+                new_node = Node(current_layer, next.state)
+                new_distance = dd.distance[node] + arc.value
+                if new_node in layer
+                    if new_distance > dd.distance[new_node]
+                        # Improvement in longest path!
+                        dd.inarc[new_node] = arc
+                        dd.distance[new_node] = new_distance
+                    end
+                else
+                    push!(layer, new_node)
+                    dd.inarc[new_node] = arc
+                    dd.distance[new_node] = new_distance
+                end
             end
         end
 
         push!(dd.layers, layer)
     end
 
-    # Terminal node (last layer merged to one)
-    terminal = Node(length(dd.layers), terminal_state(instance))
-    inarcs = Arc[]
+    # Terminal node (last layer reduced to best)
+    terminal = first(dd.layers[end])
     for node in dd.layers[end]
-        append!(inarcs, dd.inarcs[node])
-        delete!(dd.inarcs, node)
+        if dd.distance[node] > dd.distance[terminal]
+            terminal = node
+        end
     end
-    dd.inarcs[terminal] = inarcs
     dd.layers[end] = Set([terminal])
 
     return dd
@@ -112,38 +122,15 @@ struct Solution
 end
 
 function longest_path(dd::DecisionDiagram)
-    distance = Dict{Node, Float64}()
-    predecessor = Dict{Node, Arc}()
-
-    # Start from root, find path to terminal.
-    root = only(dd.layers[1])
-    distance[root] = 0.0
-
-    # Search layer by layer.
-    for layer in dd.layers[2:end]
-        for node in layer
-            @assert !haskey(distance, node) && !haskey(predecessor, node)
-            dist, pred = -Inf, nothing
-            for arc in dd.inarcs[node]
-                newdist = distance[arc.tail] + arc.value
-                if newdist > dist
-                    dist = newdist
-                    pred = arc
-                end
-            end
-            distance[node] = dist
-            predecessor[node] = pred
-        end
-    end
-
-    # Collect path in reverse, from terminal.
+    # Collect path in reverse, from terminal to root.
     terminal = only(dd.layers[end])
+    root = only(dd.layers[1])
     node, decisions = terminal, []
     while node != root
-        arc = predecessor[node]
+        arc = dd.inarc[node]
         pushfirst!(decisions, arc.decision)
         node = arc.tail
     end
 
-    return Solution(decisions, distance[terminal])
+    return Solution(decisions, dd.distance[terminal])
 end
