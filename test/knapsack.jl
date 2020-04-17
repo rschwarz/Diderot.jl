@@ -5,7 +5,6 @@ using Diderot: Instance, State, Transition, Node, Arc
 
     @test Diderot.variables(inst) == 1:3
     @test Diderot.initial_state(inst) == State(4)
-    @test Diderot.terminal_state(inst) == State(-1)
 
     @test Diderot.transition(inst, State(2), 1, false) ==
         Transition(State(2), 0.0)

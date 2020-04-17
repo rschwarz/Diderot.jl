@@ -25,10 +25,6 @@ function initial_state(instance::Instance)
     return State(instance.capacity)
 end
 
-function terminal_state(instance::Instance)
-    return State(-1)
-end
-
 function transition(instance::Instance, state::State, variable::Int, decision::Bool)
     if decision
         slack = state.capacity - instance.weights[variable]
