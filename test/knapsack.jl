@@ -21,40 +21,19 @@ end
     @test length(dd.layers) == 4
 
     @test length(dd.layers[1]) == 1 # root
-
-    @test Node(1, State(4)) in dd.layers[1]
-    @test !haskey(dd.inarc, Node(1, State(4)))
-    @test dd.distance[Node(1, State(4))] ≈ 0.0
+    @test dd.layers[1][State(4)] == Node(nothing, 0.0)
 
     @test length(dd.layers[2]) == 2 # 4, 1
-
-    @test Node(2, State(4)) in dd.layers[2]
-    @test dd.inarc[Node(2, State(4))] == Arc(Node(1, State(4)), false, 0.0)
-    @test dd.distance[Node(2, State(4))] ≈ 0.0
-
-    @test Node(2, State(1)) in dd.layers[2]
-    @test dd.inarc[Node(2, State(1))] == Arc(Node(1, State(4)), true, 4.0)
-    @test dd.distance[Node(2, State(1))] ≈ 4.0
+    @test dd.layers[2][State(4)] == Node(Arc(State(4), false, 0.0), 0.0)
+    @test dd.layers[2][State(1)] == Node(Arc(State(4), true, 4.0), 4.0)
 
     @test length(dd.layers[3]) == 3 # 4, 2, 1
-
-    @test Node(3, State(4)) in dd.layers[3]
-    @test dd.inarc[Node(3, State(4))] == Arc(Node(2, State(4)), false, 0.0)
-    @test dd.distance[Node(3, State(4))] ≈ 0.0
-
-    @test Node(3, State(2)) in dd.layers[3]
-    @test dd.inarc[Node(3, State(2))] == Arc(Node(2, State(4)), true, 3.0)
-    @test dd.distance[Node(3, State(2))] ≈ 3.0
-
-    @test Node(3, State(1)) in dd.layers[3]
-    @test dd.inarc[Node(3, State(1))] == Arc(Node(2, State(1)), false, 0.0)
-    @test dd.distance[Node(3, State(1))] ≈ 4.0
+    @test dd.layers[3][State(4)] == Node(Arc(State(4), false, 0.0), 0.0)
+    @test dd.layers[3][State(2)] == Node(Arc(State(4), true, 3.0), 3.0)
+    @test dd.layers[3][State(1)] == Node(Arc(State(1), false, 0.0), 4.0)
 
     @test length(dd.layers[4]) == 1 # terminal
-
-    @test Node(4, State(0)) in dd.layers[4]
-    @test dd.inarc[Node(4, State(0))] == Arc(Node(3, State(2)), true, 2.0)
-    @test dd.distance[Node(4, State(0))] ≈ 5.0
+    @test dd.layers[4][State(0)] == Node(Arc(State(2), true, 2.0), 5.0)
 end
 
 @testset "longest path" begin
