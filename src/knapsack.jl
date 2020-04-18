@@ -43,6 +43,24 @@ end
 Base.eltype(::Type{VarsInOrder}) = Int
 Base.length(iter::VarsInOrder) = iter.n
 
+struct VarsByWeightDecr
+    perm::Vector{Int}
+end
+function VarsByWeightDecr(instance::Instance)
+    perm = sortperm(1:length(instance), by=i->instance.weights[i], rev=true)
+    VarsByWeightDecr(perm)
+end
+
+function Base.iterate(iter::VarsByWeightDecr, state=1)
+    if state > length(iter.perm)
+        nothing
+    else
+        iter.perm[state], state + 1
+    end
+end
+Base.eltype(::Type{VarsByWeightDecr}) = Int
+Base.length(iter::VarsByWeightDecr) = length(iter.perm)
+
 function transition(instance::Instance, state::State, variable::Int, decision::Bool)
     if decision
         slack = state.capacity - instance.weights[variable]
@@ -78,13 +96,13 @@ struct DecisionDiagram
 end
 DecisionDiagram() = DecisionDiagram([], [])
 
-function top_down(instance)
+function top_down(instance, variter)
     dd = DecisionDiagram()
     root = Layer(initial_state(instance) => Node())
     push!(dd.layers, root)
 
     # Intermediate layers
-    for (depth, variable) in enumerate(VarsInOrder(instance))
+    for (depth, variable) in enumerate(variter)
         layer = Layer()
 
         # Collect new states, keep only "best" arcs.
