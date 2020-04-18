@@ -4,7 +4,13 @@ struct Instance
     values::Vector{Float64}
     weights::Vector{Int}
     capacity::Int
+
+    function Instance(values, weights, capacity)
+        @assert length(values) == length(weights)
+        new(values, weights, capacity)
+    end
 end
+Base.length(instance::Instance) = length(instance.values)
 
 struct State
     capacity::Int
