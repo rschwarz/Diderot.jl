@@ -56,8 +56,9 @@ const Layer = Dict{State,Node}
 
 struct DecisionDiagram
     layers::Vector{Layer}
+    variables::Vector{Int}
 end
-DecisionDiagram() = DecisionDiagram([])
+DecisionDiagram() = DecisionDiagram([], [])
 
 function top_down(instance)
     dd = DecisionDiagram()
@@ -87,6 +88,7 @@ function top_down(instance)
         end
 
         push!(dd.layers, layer)
+        push!(dd.variables, variable)
     end
 
     # Terminal node (last layer reduced to best)
@@ -110,10 +112,10 @@ end
 function longest_path(dd::DecisionDiagram)
     # Collect path in reverse, from terminal to root.
     terminal = only(values(dd.layers[end]))
-    decisions = []
+    decisions = Vector{Bool}(undef, length(dd.variables))
     node, depth = terminal, length(dd.layers) - 1
     while depth != 0
-        pushfirst!(decisions, node.inarc.decision)
+        decisions[dd.variables[depth]] = node.inarc.decision
         state = node.inarc.tail
         node = dd.layers[depth][state]
         depth -= 1
