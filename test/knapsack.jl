@@ -3,8 +3,8 @@ using Diderot: Instance, State, Transition, Node, Arc
 @testset "model methods" begin
     inst = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
 
-    @test Diderot.variables(inst) == 1:3
     @test Diderot.initial_state(inst) == State(4)
+    @test collect(Diderot.VarsInOrder(inst)) == [1, 2, 3]
 
     @test Diderot.transition(inst, State(2), 1, false) ==
         Transition(State(2), 0.0)

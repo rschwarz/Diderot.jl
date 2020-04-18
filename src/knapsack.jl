@@ -23,13 +23,25 @@ struct Transition
     value::Float64
 end
 
-function variables(instance::Instance)
-    return 1:length(instance.values)
-end
-
 function initial_state(instance::Instance)
     return State(instance.capacity)
 end
+
+"Iterator over decision variables."
+struct VarsInOrder
+    n::Int
+end
+VarsInOrder(instance::Instance) = VarsInOrder(length(instance))
+
+function Base.iterate(iter::VarsInOrder, state=1)
+    if state > iter.n
+        nothing
+    else
+        state, state + 1
+    end
+end
+Base.eltype(::Type{VarsInOrder}) = Int
+Base.length(iter::VarsInOrder) = iter.n
 
 function transition(instance::Instance, state::State, variable::Int, decision::Bool)
     if decision
@@ -72,7 +84,7 @@ function top_down(instance)
     push!(dd.layers, root)
 
     # Intermediate layers
-    for (depth, variable) in enumerate(variables(instance))
+    for (depth, variable) in enumerate(VarsInOrder(instance))
         layer = Layer()
 
         # Collect new states, keep only "best" arcs.
