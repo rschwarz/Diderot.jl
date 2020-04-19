@@ -1,4 +1,4 @@
-using Diderot: Instance, State, Transition, Node, Arc
+using Diderot: Instance, State, Node, Arc
 
 @testset "model methods" begin
     inst = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
@@ -7,11 +7,11 @@ using Diderot: Instance, State, Transition, Node, Arc
     @test collect(Diderot.VarsInOrder(inst)) == [1, 2, 3]
     @test collect(Diderot.VarsByWeightDecr(inst)) == [1, 2, 3]
 
-    @test Diderot.transition(inst, State(2), 1, false) ==
-        Transition(State(2), 0.0)
-    @test Diderot.transition(inst, State(2), 1, true) == Diderot.Infeasible()
-    @test Diderot.transition(inst, State(2), 2, true) ==
-        Transition(State(0), 3.0)
+    @test Diderot.transitions(inst, State(2), 1) ==
+        Dict(Arc(State(2), false, 0.0) => State(2))
+    @test Diderot.transitions(inst, State(2), 2) ==
+        Dict(Arc(State(2), false, 0.0) => State(2),
+             Arc(State(2), true,  3.0) => State(0))
 
     inst2 = Instance([4.0, 3.0, 2.0], [2, 3, 2], 4)
     @test collect(Diderot.VarsByWeightDecr(inst2)) == [2, 1, 3]

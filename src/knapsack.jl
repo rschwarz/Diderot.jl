@@ -16,13 +16,6 @@ struct State
     capacity::Int
 end
 
-struct Infeasible end
-
-struct Transition
-    state::State
-    value::Float64
-end
-
 function initial_state(instance::Instance)
     return State(instance.capacity)
 end
@@ -61,17 +54,20 @@ end
 Base.eltype(::Type{VarsByWeightDecr}) = Int
 Base.length(iter::VarsByWeightDecr) = length(iter.perm)
 
-function transition(instance::Instance, state::State, variable::Int, decision::Bool)
-    if decision
-        slack = state.capacity - instance.weights[variable]
-        if slack >= 0
-            return Transition(State(slack), instance.values[variable])
-        else
-            return Infeasible()
-        end
-    else
-        return Transition(state, 0.0)
+function transitions(instance::Instance, state::State, variable::Int)
+    results = Dict{Arc, State}()
+
+    # true
+    slack = state.capacity - instance.weights[variable]
+    if slack >= 0
+        arc = Arc(state, true, instance.values[variable])
+        results[arc] = State(slack)
     end
+
+    # false
+    results[Arc(state, false, 0.0)] = state # unchanged
+
+    return results
 end
 
 ### Decision Diagram Implementation
@@ -107,18 +103,14 @@ function top_down(instance, variter)
 
         # Collect new states, keep only "best" arcs.
         for (state, node) in dd.layers[end]
-            for decision in (false, true)
-                next = transition(instance, state, variable, decision)
-                next === Infeasible() && continue
-
-                arc = Arc(state, decision, next.value)
+            for (arc, new_state) in transitions(instance, state, variable)
                 new_node = Node(arc, node.dist + arc.value)
-                if haskey(layer, next.state)
-                    if new_node.dist > layer[next.state].dist
-                        layer[next.state] = new_node
+                if haskey(layer, new_state)
+                    if new_node.dist > layer[new_state].dist
+                        layer[new_state] = new_node
                     end
                 else
-                    layer[next.state] = new_node
+                    layer[new_state] = new_node
                 end
             end
         end
