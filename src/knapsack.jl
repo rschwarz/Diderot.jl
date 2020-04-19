@@ -92,8 +92,7 @@ struct DecisionDiagram
 end
 DecisionDiagram() = DecisionDiagram([], [])
 
-function top_down(instance, variter)
-    dd = DecisionDiagram()
+function top_down(instance, variter, dd=DecisionDiagram())
     root = Layer(initial_state(instance) => Node())
     push!(dd.layers, root)
 
