@@ -159,3 +159,15 @@ function longest_path(dd::DecisionDiagram)
 
     return Solution(decisions, terminal.dist)
 end
+
+### Restriction
+
+struct RestrictLowDist
+    maxwidth::Int
+end
+
+function (r::RestrictLowDist)(layer::Layer)
+    candidates = collect(layer)
+    sort!(candidates, by=tup -> tup.second.dist, rev=true)
+    return Layer(candidates[1:r.maxwidth])
+end

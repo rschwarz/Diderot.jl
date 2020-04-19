@@ -53,3 +53,29 @@ end
     @test sol2.decisions == [true, false, true]
     @test sol2.objective ≈ 5.0
 end
+
+@testset "restriction" begin
+    inst = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
+
+    @testset "width 1" begin
+        dd = Diderot.top_down(inst, Diderot.VarsInOrder(inst),
+                              process_layer=Diderot.RestrictLowDist(1))
+        @test length(dd.layers) == 4
+        @test all(l -> length(l) == 1, dd.layers)
+
+        sol = Diderot.longest_path(dd)
+        @test sol.decisions == [true, false, false]
+        @test sol.objective ≈ 4.0
+    end
+
+    @testset "width 2" begin
+        dd = Diderot.top_down(inst, Diderot.VarsInOrder(inst),
+                              process_layer=Diderot.RestrictLowDist(2))
+        @test length(dd.layers) == 4
+        @test all(l -> length(l) in (1, 2), dd.layers)
+
+        sol = Diderot.longest_path(dd)
+        @test sol.decisions == [false, true, true]
+        @test sol.objective ≈ 5.0 # optimum!
+    end
+end
