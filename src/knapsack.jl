@@ -92,6 +92,16 @@ struct DecisionDiagram
 end
 DecisionDiagram() = DecisionDiagram([], [])
 
+function add_transition(layer::Layer, new_state::State, new_node::Node)
+    if haskey(layer, new_state)
+        if new_node.dist > layer[new_state].dist
+            layer[new_state] = new_node
+        end
+    else
+        layer[new_state] = new_node
+    end
+end
+
 function top_down(instance, variter, dd=DecisionDiagram())
     root = Layer(initial_state(instance) => Node())
     push!(dd.layers, root)
@@ -104,13 +114,7 @@ function top_down(instance, variter, dd=DecisionDiagram())
         for (state, node) in dd.layers[end]
             for (arc, new_state) in transitions(instance, state, variable)
                 new_node = Node(arc, node.dist + arc.value)
-                if haskey(layer, new_state)
-                    if new_node.dist > layer[new_state].dist
-                        layer[new_state] = new_node
-                    end
-                else
-                    layer[new_state] = new_node
-                end
+                add_transition(layer, new_state, new_node)
             end
         end
 
