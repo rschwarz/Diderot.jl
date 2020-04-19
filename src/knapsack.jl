@@ -102,7 +102,9 @@ function add_transition(layer::Layer, new_state::State, new_node::Node)
     end
 end
 
-function top_down(instance, variter, dd=DecisionDiagram())
+function top_down(instance, variter;
+                  process_layer=identity,
+                  dd=DecisionDiagram())
     root = Layer(initial_state(instance) => Node())
     push!(dd.layers, root)
 
@@ -117,6 +119,9 @@ function top_down(instance, variter, dd=DecisionDiagram())
                 add_transition(layer, new_state, new_node)
             end
         end
+
+        # Process layer (e.g. restriction, relaxation)
+        layer = process_layer(layer)
 
         push!(dd.layers, layer)
         push!(dd.variables, variable)
