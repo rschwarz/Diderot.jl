@@ -185,3 +185,34 @@ function (r::RestrictLowDist)(layer::Layer)
     sort!(candidates, by=tup -> tup.second.dist, rev=true)
     return Layer(candidates[1:r.maxwidth])
 end
+
+### Relaxation
+
+struct RelaxLowCap
+    maxwidth::Int
+end
+
+function (r::RelaxLowCap)(layer::Layer)
+    if length(layer) <= r.maxwidth
+        return layer
+    end
+
+    # sort states by decreasing capacity
+    candidates = collect(layer)
+    sort!(candidates, by=tup -> tup.first.capacity, rev=true)
+
+    # keep first (width - 1) unchanged
+    new_layer = Layer(candidates[1:(r.maxwidth - 1)])
+
+    # merge the rest:
+    # - use largest capacity
+    # - use predecessor for longest distance
+    #   ==> does not keep all solutions!
+    rest = @view candidates[r.maxwidth:end]
+    merged_state = rest[1].first
+    idx = argmax(map(tup -> tup.second.dist, rest))
+    merged_node = rest[idx].second
+    new_layer[merged_state] = merged_node
+
+    return new_layer
+end
