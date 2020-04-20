@@ -167,6 +167,10 @@ struct RestrictLowDist
 end
 
 function (r::RestrictLowDist)(layer::Layer)
+    if length(layer) <= r.maxwidth
+        return layer
+    end
+
     candidates = collect(layer)
     sort!(candidates, by=tup -> tup.second.dist, rev=true)
     return Layer(candidates[1:r.maxwidth])
