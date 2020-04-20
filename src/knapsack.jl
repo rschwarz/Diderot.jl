@@ -92,6 +92,16 @@ struct DecisionDiagram
 end
 DecisionDiagram() = DecisionDiagram([], [])
 
+function Base.show(io::IO, dd::DecisionDiagram)
+    println(io, "root: ", only(dd.layers[1]))
+    for (l, var) in enumerate(dd.variables)
+        println(io, "var: ", var)
+        for tup in dd.layers[l + 1]
+            println(io, " ", tup)
+        end
+    end
+end
+
 function add_transition(layer::Layer, new_state::State, new_node::Node)
     if haskey(layer, new_state)
         if new_node.dist > layer[new_state].dist
