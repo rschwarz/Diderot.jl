@@ -81,8 +81,10 @@ end
 struct Node
     inarc::Union{Arc, Nothing}
     dist::Float64
+    exact::Bool
 end
-Node() = Node(nothing, 0.0)
+Node(inarc, dist) = Node(inarc, dist, true)
+Node() = Node(nothing, 0.0, true)
 
 const Layer = Dict{State,Node}
 
@@ -212,7 +214,7 @@ function (r::RelaxLowCap)(layer::Layer)
     merged_state = rest[1].first
     idx = argmax(map(tup -> tup.second.dist, rest))
     merged_node = rest[idx].second
-    new_layer[merged_state] = merged_node
+    new_layer[merged_state] = Node(merged_node.inarc, merged_node.dist, false)
 
     return new_layer
 end
