@@ -117,8 +117,11 @@ end
 function top_down(instance, variter;
                   process_layer=identity,
                   dd=DecisionDiagram())
-    root = Layer(initial_state(instance) => Node())
-    push!(dd.layers, root)
+    # Add root layer if missing
+    if length(dd.layers) == 0
+        root = Layer(initial_state(instance) => Node())
+        push!(dd.layers, root)
+    end
 
     # Intermediate layers
     for (depth, variable) in enumerate(variter)
