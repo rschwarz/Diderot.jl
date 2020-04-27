@@ -221,3 +221,89 @@ function (r::RelaxLowCap)(layer::Layer)
 
     return new_layer
 end
+
+### Branch-and-Bound
+
+struct SubProblem
+    # partial solution (assigned so far)
+    vars::Array{Int}
+    decs::Array{Bool}
+    dist::Float64
+
+    # state (to complete solution)
+    state::State
+end
+
+function last_exact_layer(dd::DecisionDiagram)
+    for (l, layer) in enumerate(dd.layers)
+        if !all((s,n) -> n.exact, layer)
+            # Current layer has at least one relaxed node.
+            @assert l > 1
+
+            # Return previous layer (all exact)
+            return l - 1
+        end
+    end
+    # If we reached the end then even the terminal layer is exact.
+    return len(dd.layers)
+end
+
+function branch_and_bound(inst, variter, restrict, relax)
+    problems = [] # TODO: use priority queue?
+    incumbent = Solution([], -Inf)
+    dualbound = Inf
+
+    # Set up original problem
+    push!(problems, SubProblem([], [], 0.0, initial_state(inst)))
+
+    # Solve subproblems, one at a time.
+    while !empty(problems)
+        current = popfirst!(problems)
+
+        # TODO: tell variter about partial sol!
+
+        root_layer = Layer(current.state => Node(nothing, current.dist, true))
+
+        # solve restriction
+        dd = DecisionDiagram(root_layer, [])
+        top_down(inst, variter, process_layer=restrict, dd=dd)
+        sol = longest_path(dd)
+
+        # update incumbent
+        if sol.objective > incumbent.objective
+            for (var, dec) in zip(current.vars, current.decs)
+                sol.decisions[var] = dec
+            end
+            incumbent = sol
+        end
+
+        # TODO: check if restriction was exact (then continue)
+
+        # solve relaxation
+        dd = DecisionDiagram(root_layer, [])
+        top_down(inst, variter, process_layer=restrict, dd=dd)
+        sol = longest_path(dd)
+
+        # create subproblems if not pruned
+        if sol.objective > incumbent.objective
+            cutset = last_exact_layer(dd)
+            for (sub_state, sub_node) in dd.layers[cutset]
+                depth = cutset - 1
+                new_decs = Vector{Bool}(undef, depth)
+                while depth != 0
+                    new_decs[depth] = node.inarc.decision
+                    state = node.inarc.tail
+                    node = dd.layers[depth][state]
+                    depth -= 1
+                end
+
+                vars = vcat(current.vars, dd.variables[1:depth])
+                decs = vcat(current.decs, new_decs)
+
+                prob = SubProblem(vars, decs, sub_node.dist, sub_state)
+                push!(problems, prob)
+            end
+        end
+    end
+
+end
