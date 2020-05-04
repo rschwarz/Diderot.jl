@@ -114,6 +114,20 @@ function add_transition(layer::Layer, new_state::State, new_node::Node)
     end
 end
 
+function build_layer(instance, dd, variable)
+    layer = Layer()
+
+    # Collect new states, keep only "best" arcs.
+    for (state, node) in dd.layers[end]
+        for (arc, new_state) in transitions(instance, state, variable)
+            new_node = Node(arc, node.dist + arc.value)
+            add_transition(layer, new_state, new_node)
+        end
+    end
+
+    return layer
+end
+
 function top_down(instance, variter;
                   process_layer=identity,
                   dd=DecisionDiagram())
@@ -125,18 +139,8 @@ function top_down(instance, variter;
 
     # Intermediate layers
     for (depth, variable) in enumerate(variter)
-        layer = Layer()
-
-        # Collect new states, keep only "best" arcs.
-        for (state, node) in dd.layers[end]
-            for (arc, new_state) in transitions(instance, state, variable)
-                new_node = Node(arc, node.dist + arc.value)
-                add_transition(layer, new_state, new_node)
-            end
-        end
-
-        # Process layer (e.g. restriction, relaxation)
-        layer = process_layer(layer)
+        layer = build_layer(instance, dd, variable)
+        layer = process_layer(layer)   # restrict/relax
 
         push!(dd.layers, layer)
         push!(dd.variables, variable)
