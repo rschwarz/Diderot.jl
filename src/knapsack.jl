@@ -138,7 +138,7 @@ function top_down(instance, variter;
     end
 
     # Intermediate layers
-    for (depth, variable) in enumerate(variter)
+    for variable in variter
         layer = build_layer(instance, dd, variable)
         layer = process_layer(layer)   # restrict/relax
 
