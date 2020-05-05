@@ -259,7 +259,7 @@ function last_exact_layer(dd::DecisionDiagram)
     return len(dd.layers)
 end
 
-function branch_and_bound(inst, variter, restrict, relax)
+function branch_and_bound(inst, var_order, restrict, relax)
     problems = [] # TODO: use priority queue?
     incumbent = Solution([], -Inf)
     dualbound = Inf
@@ -271,13 +271,11 @@ function branch_and_bound(inst, variter, restrict, relax)
     while !empty(problems)
         current = popfirst!(problems)
 
-        # TODO: tell variter about partial sol!
-
         root_layer = Layer(current.state => Node(nothing, current.dist, true))
 
         # solve restriction
-        dd = DecisionDiagram(root_layer, [])
-        top_down(inst, variter, process_layer=restrict, dd=dd)
+        dd = DecisionDiagram(current.vars, root_layer, [])
+        top_down(inst, var_order, process_layer=restrict, dd=dd)
         sol = longest_path(dd)
 
         # update incumbent
@@ -317,4 +315,5 @@ function branch_and_bound(inst, variter, restrict, relax)
         end
     end
 
+    return incumbent
 end
