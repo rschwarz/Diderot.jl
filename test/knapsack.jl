@@ -107,3 +107,42 @@ end
         @test sol.objective ≈ 6.0
     end
 end
+
+@testset "branch and bound" begin
+    inst = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
+
+    # Relaxation needs at least width 2 for branching.
+
+    @testset "width 1" begin
+        sol = Diderot.branch_and_bound(
+            inst, Diderot.InOrder(),
+            Diderot.RestrictLowDist(1), Diderot.RelaxLowCap(2))
+        @test sol.decisions == [false, true, true]
+        @test sol.objective ≈ 5.0
+    end
+
+    @testset "width 2" begin
+        sol = Diderot.branch_and_bound(
+            inst, Diderot.InOrder(),
+            Diderot.RestrictLowDist(2), Diderot.RelaxLowCap(2))
+        @test sol.decisions == [false, true, true]
+        @test sol.objective ≈ 5.0
+    end
+
+    @testset "width 3" begin
+        sol = Diderot.branch_and_bound(
+            inst, Diderot.InOrder(),
+            Diderot.RestrictLowDist(3), Diderot.RelaxLowCap(3))
+        @test sol.decisions == [false, true, true]
+        @test sol.objective ≈ 5.0
+    end
+
+    @testset "n 5, width 2" begin
+        inst2 = Instance([5, 3, 2, 7, 4], [2, 8, 4, 2, 5], 10)
+        sol = Diderot.branch_and_bound(
+            inst2, Diderot.InOrder(),
+            Diderot.RestrictLowDist(2), Diderot.RelaxLowCap(2))
+        @test sol.decisions == [1, 0, 0, 1, 1]
+        @test sol.objective ≈ 16.0
+    end
+end
