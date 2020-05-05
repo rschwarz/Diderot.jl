@@ -20,39 +20,33 @@ function initial_state(instance::Instance)
     return State(instance.capacity)
 end
 
-"Iterator over decision variables."
-struct VarsInOrder
-    n::Int
-end
-VarsInOrder(instance::Instance) = VarsInOrder(length(instance))
+struct InOrder end
 
-function Base.iterate(iter::VarsInOrder, state=1)
-    if state > iter.n
-        nothing
-    else
-        state, state + 1
+function next_variable(inst, dd, ::InOrder)
+    n = length(inst)
+    fixed = fixed_vars(dd)
+    for i in 1:n
+        if !(i in fixed)  # TODO: efficient!
+            return i
+        end
     end
-end
-Base.eltype(::Type{VarsInOrder}) = Int
-Base.length(iter::VarsInOrder) = iter.n
-
-struct VarsByWeightDecr
-    perm::Vector{Int}
-end
-function VarsByWeightDecr(instance::Instance)
-    perm = sortperm(1:length(instance), by=i->instance.weights[i], rev=true)
-    VarsByWeightDecr(perm)
+    return nothing
 end
 
-function Base.iterate(iter::VarsByWeightDecr, state=1)
-    if state > length(iter.perm)
-        nothing
-    else
-        iter.perm[state], state + 1
+struct ByWeightDecr end
+
+function next_variable(inst, dd, ::ByWeightDecr)
+    n = length(inst)
+    fixed = fixed_vars(dd)
+    # TODO: efficient!
+    perm = sortperm(1:length(inst), by=i->inst.weights[i], rev=true)
+    for i in perm
+        if !(i in fixed)
+            return i
+        end
     end
+    return nothing
 end
-Base.eltype(::Type{VarsByWeightDecr}) = Int
-Base.length(iter::VarsByWeightDecr) = length(iter.perm)
 
 function transitions(instance::Instance, state::State, variable::Int)
     results = Dict{Arc, State}()
@@ -89,12 +83,15 @@ Node() = Node(nothing, 0.0, true)
 const Layer = Dict{State,Node}
 
 struct DecisionDiagram
-    layers::Vector{Layer}
-    variables::Vector{Int}
+    partial_sol::Vector{Int} # partial solution
+
+    layers::Vector{Layer}  # length n + 1
+    variables::Vector{Int} # length n
 end
-DecisionDiagram() = DecisionDiagram([], [])
+DecisionDiagram() = DecisionDiagram([], [], [])
 
 function Base.show(io::IO, dd::DecisionDiagram)
+    println(io, "already fixed: ", dd.partial_sol)
     println(io, "root: ", only(dd.layers[1]))
     for (l, var) in enumerate(dd.variables)
         println(io, "var: ", var)
@@ -102,6 +99,10 @@ function Base.show(io::IO, dd::DecisionDiagram)
             println(io, " ", tup)
         end
     end
+end
+
+function fixed_vars(dd::DecisionDiagram)
+    return vcat(dd.partial_sol, dd.variables)
 end
 
 function add_transition(layer::Layer, new_state::State, new_node::Node)
@@ -128,7 +129,7 @@ function build_layer(instance, dd, variable)
     return layer
 end
 
-function top_down(instance, variter;
+function top_down(instance, var_order;
                   process_layer=identity,
                   dd=DecisionDiagram())
     # Add root layer if missing
@@ -138,7 +139,13 @@ function top_down(instance, variter;
     end
 
     # Intermediate layers
-    for variable in variter
+
+    while true
+        variable = next_variable(instance, dd, var_order)
+        if variable === nothing
+            break
+        end
+
         layer = build_layer(instance, dd, variable)
         layer = process_layer(layer)   # restrict/relax
 
