@@ -1,5 +1,3 @@
-### Knapsack Model
-
 struct Instance
     values::Vector{Float64}
     weights::Vector{Int}
@@ -10,7 +8,10 @@ struct Instance
         new(values, weights, capacity)
     end
 end
+
 Base.length(instance::Instance) = length(instance.values)
+domain_type(instance::Instance) = Bool
+value_type(instance::Instance) = Float64
 
 struct State
     capacity::Int
@@ -48,8 +49,8 @@ function next_variable(inst, dd, ::ByWeightDecr)
     return nothing
 end
 
-function transitions(instance::Instance, state::State, variable::Int)
-    results = Dict{Arc, State}()
+function transitions(instance::Instance, state, variable)
+    results = Dict{Arc{State, Bool, Float64}, State}()
 
     # true
     slack = state.capacity - instance.weights[variable]
@@ -64,143 +65,20 @@ function transitions(instance::Instance, state::State, variable::Int)
     return results
 end
 
-### Decision Diagram Implementation
-
-struct Arc
-    tail::State
-    decision::Bool
-    value::Float64
-end
-
-struct Node
-    inarc::Union{Arc, Nothing}
-    dist::Float64
-    exact::Bool
-end
-Node(inarc, dist) = Node(inarc, dist, true)
-Node() = Node(nothing, 0.0, true)
-
-const Layer = Dict{State,Node}
-
-struct DecisionDiagram
-    partial_sol::Vector{Int} # partial solution
-
-    layers::Vector{Layer}  # length n + 1
-    variables::Vector{Int} # length n
-end
-DecisionDiagram() = DecisionDiagram([], [], [])
-
-function Base.show(io::IO, dd::DecisionDiagram)
-    println(io, "already fixed: ", dd.partial_sol)
-    println(io, "root: ", only(dd.layers[1]))
-    for (l, var) in enumerate(dd.variables)
-        println(io, "var: ", var)
-        for tup in dd.layers[l + 1]
-            println(io, " ", tup)
-        end
-    end
-end
-
-function fixed_vars(dd::DecisionDiagram)
-    return vcat(dd.partial_sol, dd.variables)
-end
-
-function add_transition(layer::Layer, new_state::State, new_node::Node)
-    if haskey(layer, new_state)
-        if new_node.dist > layer[new_state].dist
-            layer[new_state] = new_node
-        end
-    else
-        layer[new_state] = new_node
-    end
-end
-
-function build_layer(instance, dd, variable)
-    layer = Layer()
-
-    # Collect new states, keep only "best" arcs.
-    for (state, node) in dd.layers[end]
-        for (arc, new_state) in transitions(instance, state, variable)
-            new_node = Node(arc, node.dist + arc.value)
-            add_transition(layer, new_state, new_node)
-        end
-    end
-
-    return layer
-end
-
-function top_down(instance, var_order;
-                  process_layer=identity,
-                  dd=DecisionDiagram())
-    # Add root layer if missing
-    if length(dd.layers) == 0
-        root = Layer(initial_state(instance) => Node())
-        push!(dd.layers, root)
-    end
-
-    # Intermediate layers
-
-    while true
-        variable = next_variable(instance, dd, var_order)
-        if variable === nothing
-            break
-        end
-
-        layer = build_layer(instance, dd, variable)
-        layer = process_layer(layer)   # restrict/relax
-
-        push!(dd.layers, layer)
-        push!(dd.variables, variable)
-    end
-
-    # Terminal node (last layer reduced to best)
-    maxstate, maxnode = nothing, Node(nothing, -Inf)
-    for (state, node) in dd.layers[end]
-        if node.dist > maxnode.dist
-            maxstate = state
-            maxnode = node
-        end
-    end
-    dd.layers[end] = Dict(maxstate => maxnode)
-
-    return dd
-end
-
-struct Solution
-    decisions::Vector{Bool}
-    objective::Float64
-end
-
-function longest_path(dd::DecisionDiagram)
-    # Collect path in reverse, from terminal to root.
-    terminal = only(values(dd.layers[end]))
-    num_vars =  length(dd.partial_sol) + length(dd.variables)
-    decisions = Vector{Bool}(undef, num_vars)
-    node, depth = terminal, length(dd.layers) - 1
-    while depth != 0
-        decisions[dd.variables[depth]] = node.inarc.decision
-        state = node.inarc.tail
-        node = dd.layers[depth][state]
-        depth -= 1
-    end
-
-    return Solution(decisions, terminal.dist)
-end
-
 ### Restriction
 
 struct RestrictLowDist
     maxwidth::Int
 end
 
-function (r::RestrictLowDist)(layer::Layer)
+function (r::RestrictLowDist)(layer::Layer{S,D,V}) where {S,D,V}
     if length(layer) <= r.maxwidth
         return layer
     end
 
     candidates = collect(layer)
     sort!(candidates, by=tup -> tup.second.dist, rev=true)
-    return Layer(candidates[1:r.maxwidth])
+    return Layer{S,D,V}(candidates[1:r.maxwidth])
 end
 
 ### Relaxation
@@ -209,7 +87,7 @@ struct RelaxLowCap
     maxwidth::Int
 end
 
-function (r::RelaxLowCap)(layer::Layer)
+function (r::RelaxLowCap)(layer::Layer{S,D,V}) where {S,D,V}
     if length(layer) <= r.maxwidth
         return layer
     end
@@ -219,7 +97,7 @@ function (r::RelaxLowCap)(layer::Layer)
     sort!(candidates, by=tup -> tup.first.capacity, rev=true)
 
     # keep first (width - 1) unchanged
-    new_layer = Layer(candidates[1:(r.maxwidth - 1)])
+    new_layer = Layer{S,D,V}(candidates[1:(r.maxwidth - 1)])
 
     # merge the rest:
     # - use largest capacity
@@ -229,94 +107,7 @@ function (r::RelaxLowCap)(layer::Layer)
     merged_state = rest[1].first
     idx = argmax(map(tup -> tup.second.dist, rest))
     merged_node = rest[idx].second
-    new_layer[merged_state] = Node(merged_node.inarc, merged_node.dist, false)
+    new_layer[merged_state] = Node{S,D,V}(merged_node.dist, merged_node.inarc, false)
 
     return new_layer
-end
-
-### Branch-and-Bound
-
-struct SubProblem
-    # partial solution (assigned so far)
-    vars::Array{Int}
-    decs::Array{Bool}
-    dist::Float64
-
-    # state (to complete solution)
-    state::State
-end
-
-function last_exact_layer(dd::DecisionDiagram)
-    for (l, layer) in enumerate(dd.layers)
-        if !all(node -> node.exact, values(layer))
-            # Current layer has at least one relaxed node.
-            @assert l > 1
-
-            # Return previous layer (all exact)
-            return l - 1
-        end
-    end
-    # If we reached the end then even the terminal layer is exact.
-    return len(dd.layers)
-end
-
-function branch_and_bound(inst, var_order, restrict, relax)
-    problems = [] # TODO: use priority queue?
-    incumbent = Solution([], -Inf)
-    dualbound = Inf
-
-    # Set up original problem
-    push!(problems, SubProblem([], [], 0.0, initial_state(inst)))
-
-    # Solve subproblems, one at a time.
-    while !isempty(problems)
-        current = popfirst!(problems)
-
-        root_layer = Layer(current.state => Node(nothing, current.dist, true))
-
-        # solve restriction
-        dd = DecisionDiagram(current.vars, [root_layer], [])
-        top_down(inst, var_order, process_layer=restrict, dd=dd)
-        sol = longest_path(dd)
-
-        # update incumbent
-        if sol.objective > incumbent.objective
-            for (var, dec) in zip(current.vars, current.decs)
-                sol.decisions[var] = dec
-            end
-            incumbent = sol
-        end
-
-        # TODO: check if restriction was exact (then continue)
-
-        # solve relaxation
-        dd = DecisionDiagram(current.vars, [root_layer], [])
-        top_down(inst, var_order, process_layer=relax, dd=dd)
-        sol = longest_path(dd)
-
-        # create subproblems if not pruned
-        if sol.objective > incumbent.objective
-            cutset = last_exact_layer(dd)
-            @assert length(dd.layers[cutset]) > 1
-            for (sub_state, sub_node) in dd.layers[cutset]
-                depth = cutset - 1
-                new_decs = Vector{Bool}(undef, depth)
-                node = sub_node
-                while depth != 0
-                    new_decs[depth] = node.inarc.decision
-                    state = node.inarc.tail
-                    node = dd.layers[depth][state]
-                    depth -= 1
-                end
-
-                vars = vcat(current.vars, dd.variables[1:cutset - 1])
-                decs = vcat(current.decs, new_decs)
-
-                prob = SubProblem(vars, decs, sub_node.dist, sub_state)
-                push!(problems, prob)
-            end
-        end
-    end
-
-    return incumbent
 end
