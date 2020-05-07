@@ -1,153 +1,156 @@
 using Diderot: Arc, Node
-using Diderot.Knapsack: Instance, ByWeightDecr, RestrictLowDist, RelaxLowCap
+using Diderot.Knapsack: Instance, DecreasingWeight, RestrictLowDistance,
+                        RelaxLowCapacity
 
 @testset "model methods" begin
-    inst = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
+    instance = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
 
-    @test Diderot.initial_state(inst) == 4
-    @test Diderot.value_type(inst) == Float64
-    @test Diderot.domain_type(inst) == Bool
+    @test Diderot.initial_state(instance) == 4
+    @test Diderot.value_type(instance) == Float64
+    @test Diderot.domain_type(instance) == Bool
 
-    dd = Diderot.Diagram(inst)
+    diagram = Diderot.Diagram(instance)
 
-    @test Diderot.next_variable(inst, dd, Diderot.VarsInOrder()) == 1
-    @test Diderot.next_variable(inst, dd, ByWeightDecr()) == 1
+    @test Diderot.next_variable(instance, diagram, Diderot.InOrder()) == 1
+    @test Diderot.next_variable(instance, diagram, DecreasingWeight()) == 1
 
-    @test Diderot.transitions(inst, 2, 1) ==
+    @test Diderot.transitions(instance, 2, 1) ==
         Dict(Arc(2, false, 0.0) => 2)
-    @test Diderot.transitions(inst, 2, 2) ==
+    @test Diderot.transitions(instance, 2, 2) ==
         Dict(Arc(2, false, 0.0) => 2,
              Arc(2, true,  3.0) => 0)
 
-    inst2 = Instance([4.0, 3.0, 2.0], [2, 3, 2], 4)
-    @test Diderot.next_variable(inst2, dd, ByWeightDecr()) == 2
+    instance2 = Instance([4.0, 3.0, 2.0], [2, 3, 2], 4)
+    @test Diderot.next_variable(instance2, diagram, DecreasingWeight()) == 2
 end
 
 @testset "top-down decision diagrams" begin
     N = Node{Int,Bool,Float64}
 
-    inst = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
-    dd = Diderot.Diagram(inst)
-    Diderot.top_down!(dd, inst)
+    instance = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
+    diagram = Diderot.Diagram(instance)
+    Diderot.top_down!(diagram, instance)
 
     # layers and nodes
-    @test length(dd.layers) == 4
+    @test length(diagram.layers) == 4
 
-    @test length(dd.layers[1]) == 1 # root
-    @test dd.layers[1][4] == N(0.0, nothing)
+    @test length(diagram.layers[1]) == 1 # root
+    @test diagram.layers[1][4] == N(0.0, nothing)
 
-    @test length(dd.layers[2]) == 2 # 4, 1
-    @test dd.layers[2][4] == N(0.0, Arc(4, false, 0.0))
-    @test dd.layers[2][1] == N(4.0, Arc(4, true, 4.0))
+    @test length(diagram.layers[2]) == 2 # 4, 1
+    @test diagram.layers[2][4] == N(0.0, Arc(4, false, 0.0))
+    @test diagram.layers[2][1] == N(4.0, Arc(4, true, 4.0))
 
-    @test length(dd.layers[3]) == 3 # 4, 2, 1
-    @test dd.layers[3][4] == N(0.0, Arc(4, false, 0.0))
-    @test dd.layers[3][2] == N(3.0, Arc(4, true, 3.0))
-    @test dd.layers[3][1] == N(4.0, Arc(1, false, 0.0))
+    @test length(diagram.layers[3]) == 3 # 4, 2, 1
+    @test diagram.layers[3][4] == N(0.0, Arc(4, false, 0.0))
+    @test diagram.layers[3][2] == N(3.0, Arc(4, true, 3.0))
+    @test diagram.layers[3][1] == N(4.0, Arc(1, false, 0.0))
 
-    @test length(dd.layers[4]) == 1 # terminal
-    @test dd.layers[4][0] == N(5.0, Arc(2, true, 2.0))
+    @test length(diagram.layers[4]) == 1 # terminal
+    @test diagram.layers[4][0] == N(5.0, Arc(2, true, 2.0))
 end
 
 @testset "longest path" begin
-    inst = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
-    dd = Diderot.Diagram(inst)
-    Diderot.top_down!(dd, inst)
-    sol = Diderot.longest_path(dd)
-    @test sol.decisions == [false, true, true]
-    @test sol.objective ≈ 5.0
+    instance = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
+    diagram = Diderot.Diagram(instance)
+    Diderot.top_down!(diagram, instance)
+    solution = Diderot.longest_path(diagram)
+    @test solution.decisions == [false, true, true]
+    @test solution.objective ≈ 5.0
 
-    inst2 = Instance([3.0, 4.0, 2.0], [2, 3, 2], 4)
-    dd2 = Diderot.Diagram(inst2)
-    Diderot.top_down!(dd2, inst2, var_order=ByWeightDecr())
-    sol2 = Diderot.longest_path(dd2)
-    @test sol2.decisions == [true, false, true]
-    @test sol2.objective ≈ 5.0
+    instance2 = Instance([3.0, 4.0, 2.0], [2, 3, 2], 4)
+    diagram2 = Diderot.Diagram(instance2)
+    Diderot.top_down!(diagram2, instance2, variable_order=DecreasingWeight())
+    solution2 = Diderot.longest_path(diagram2)
+    @test solution2.decisions == [true, false, true]
+    @test solution2.objective ≈ 5.0
 end
 
 @testset "restriction" begin
-    inst = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
+    instance = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
 
     @testset "width 1" begin
-        dd = Diderot.Diagram(inst)
-        Diderot.top_down!(dd, inst, process_layer=RestrictLowDist(1))
-        @test length(dd.layers) == 4
-        @test all(l -> length(l) == 1, dd.layers)
+        diagram = Diderot.Diagram(instance)
+        Diderot.top_down!(diagram, instance,
+                          process_layer=RestrictLowDistance(1))
+        @test length(diagram.layers) == 4
+        @test all(l -> length(l) == 1, diagram.layers)
 
-        sol = Diderot.longest_path(dd)
-        @test sol.decisions == [true, false, false]
-        @test sol.objective ≈ 4.0
+        solution = Diderot.longest_path(diagram)
+        @test solution.decisions == [true, false, false]
+        @test solution.objective ≈ 4.0
     end
 
     @testset "width 2" begin
-        dd = Diderot.Diagram(inst)
-        Diderot.top_down!(dd, inst, process_layer=RestrictLowDist(2))
-        @test length(dd.layers) == 4
-        @test all(l -> length(l) in (1, 2), dd.layers)
+        diagram = Diderot.Diagram(instance)
+        Diderot.top_down!(diagram, instance,
+                          process_layer=RestrictLowDistance(2))
+        @test length(diagram.layers) == 4
+        @test all(l -> length(l) in (1, 2), diagram.layers)
 
-        sol = Diderot.longest_path(dd)
-        @test sol.decisions == [false, true, true]
-        @test sol.objective ≈ 5.0 # optimum!
+        solution = Diderot.longest_path(diagram)
+        @test solution.decisions == [false, true, true]
+        @test solution.objective ≈ 5.0 # optimum!
     end
 end
 
 @testset "relaxation" begin
-    inst = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
+    instance = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
 
     @testset "width 1" begin
-        dd = Diderot.Diagram(inst)
-        Diderot.top_down!(dd, inst, process_layer=RelaxLowCap(1))
-        @test length(dd.layers) == 4
-        @test all(l -> length(l) == 1, dd.layers)
+        diagram = Diderot.Diagram(instance)
+        Diderot.top_down!(diagram, instance, process_layer=RelaxLowCapacity(1))
+        @test length(diagram.layers) == 4
+        @test all(l -> length(l) == 1, diagram.layers)
 
-        sol = Diderot.longest_path(dd)
-        @test sol.decisions == [true, true, true]
-        @test sol.objective ≈ 9.0
+        solution = Diderot.longest_path(diagram)
+        @test solution.decisions == [true, true, true]
+        @test solution.objective ≈ 9.0
     end
 
     @testset "width 2" begin
-        dd = Diderot.Diagram(inst)
-        Diderot.top_down!(dd, inst, process_layer=RelaxLowCap(2))
-        @test length(dd.layers) == 4
-        @test all(l -> length(l) in (1, 2), dd.layers)
+        diagram = Diderot.Diagram(instance)
+        Diderot.top_down!(diagram, instance, process_layer=RelaxLowCapacity(2))
+        @test length(diagram.layers) == 4
+        @test all(l -> length(l) in (1, 2), diagram.layers)
 
-        sol = Diderot.longest_path(dd)
-        @test sol.decisions == [true, false, true]
-        @test sol.objective ≈ 6.0
+        solution = Diderot.longest_path(diagram)
+        @test solution.decisions == [true, false, true]
+        @test solution.objective ≈ 6.0
     end
 end
 
 @testset "branch and bound" begin
-    inst = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
+    instance = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
 
     # Relaxation needs at least width 2 for branching.
 
     @testset "width 1" begin
-        sol = Diderot.branch_and_bound(inst, restrict=RestrictLowDist(1),
-                                       relax=RelaxLowCap(2))
-        @test sol.decisions == [false, true, true]
-        @test sol.objective ≈ 5.0
+        solution = Diderot.branch_and_bound(
+            instance, restrict=RestrictLowDistance(1), relax=RelaxLowCapacity(2))
+        @test solution.decisions == [false, true, true]
+        @test solution.objective ≈ 5.0
     end
 
     @testset "width 2" begin
-        sol = Diderot.branch_and_bound(inst, restrict=RestrictLowDist(2),
-                                       relax=RelaxLowCap(2))
-        @test sol.decisions == [false, true, true]
-        @test sol.objective ≈ 5.0
+        solution = Diderot.branch_and_bound(
+            instance, restrict=RestrictLowDistance(2), relax=RelaxLowCapacity(2))
+        @test solution.decisions == [false, true, true]
+        @test solution.objective ≈ 5.0
     end
 
     @testset "width 3" begin
-        sol = Diderot.branch_and_bound(inst, restrict=RestrictLowDist(3),
-                                       relax=RelaxLowCap(3))
-        @test sol.decisions == [false, true, true]
-        @test sol.objective ≈ 5.0
+        solution = Diderot.branch_and_bound(
+            instance, restrict=RestrictLowDistance(3), relax=RelaxLowCapacity(3))
+        @test solution.decisions == [false, true, true]
+        @test solution.objective ≈ 5.0
     end
 
     @testset "n 5, width 2" begin
-        inst2 = Instance([5, 3, 2, 7, 4], [2, 8, 4, 2, 5], 10)
-        sol = Diderot.branch_and_bound(inst2, restrict=RestrictLowDist(2),
-                                       relax=RelaxLowCap(2))
-        @test sol.decisions == [1, 0, 0, 1, 1]
-        @test sol.objective ≈ 16.0
+        instance2 = Instance([5, 3, 2, 7, 4], [2, 8, 4, 2, 5], 10)
+        solution = Diderot.branch_and_bound(
+            instance2, restrict=RestrictLowDistance(2), relax=RelaxLowCapacity(2))
+        @test solution.decisions == [1, 0, 0, 1, 1]
+        @test solution.objective ≈ 16.0
     end
 end

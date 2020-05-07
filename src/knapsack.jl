@@ -1,6 +1,7 @@
 module Knapsack
+
 using ..Diderot
-const DD = Diderot
+using ..Diderot: Arc, Node, Layer
 
 struct Instance
     values::Vector{Float64}
@@ -19,13 +20,13 @@ Diderot.value_type(instance::Instance) = Float64
 
 Diderot.initial_state(instance::Instance) = instance.capacity
 
-struct ByWeightDecr end
+struct DecreasingWeight end
 
-function Diderot.next_variable(inst, dd, ::ByWeightDecr)
-    n = length(inst)
-    fixed = Diderot.fixed_vars(dd)
+function Diderot.next_variable(instance, diagram, ::DecreasingWeight)
+    n = length(instance)
+    fixed = Diderot.fixed_variables(diagram)
     # TODO: efficient!
-    perm = sortperm(1:length(inst), by=i->inst.weights[i], rev=true)
+    perm = sortperm(1:n, by=i->instance.weights[i], rev=true)
     for i in perm
         if !(i in fixed)
             return i
@@ -35,45 +36,45 @@ function Diderot.next_variable(inst, dd, ::ByWeightDecr)
 end
 
 function Diderot.transitions(instance::Instance, state, variable)
-    results = Dict{DD.Arc{Int, Bool, Float64}, Int}()
+    results = Dict{Arc{Int, Bool, Float64}, Int}()
 
     # true
     slack = state - instance.weights[variable]
     if slack >= 0
-        arc = DD.Arc(state, true, instance.values[variable])
+        arc = Arc(state, true, instance.values[variable])
         results[arc] = slack
     end
 
     # false
-    results[DD.Arc(state, false, 0.0)] = state # unchanged
+    results[Arc(state, false, 0.0)] = state # unchanged
 
     return results
 end
 
 ### Restriction
 
-struct RestrictLowDist
-    maxwidth::Int
+struct RestrictLowDistance
+    max_width::Int
 end
 
-function (r::RestrictLowDist)(layer::DD.Layer{S,D,V}) where {S,D,V}
-    if length(layer) <= r.maxwidth
+function (r::RestrictLowDistance)(layer::Layer{S,D,V}) where {S,D,V}
+    if length(layer) <= r.max_width
         return layer
     end
 
     candidates = collect(layer)
-    sort!(candidates, by=tup -> tup.second.dist, rev=true)
-    return DD.Layer{S,D,V}(candidates[1:r.maxwidth])
+    sort!(candidates, by=tup -> tup.second.distance, rev=true)
+    return Layer{S,D,V}(candidates[1:r.max_width])
 end
 
 ### Relaxation
 
-struct RelaxLowCap
-    maxwidth::Int
+struct RelaxLowCapacity
+    max_width::Int
 end
 
-function (r::RelaxLowCap)(layer::DD.Layer{S,D,V}) where {S,D,V}
-    if length(layer) <= r.maxwidth
+function (r::RelaxLowCapacity)(layer::Layer{S,D,V}) where {S,D,V}
+    if length(layer) <= r.max_width
         return layer
     end
 
@@ -82,17 +83,18 @@ function (r::RelaxLowCap)(layer::DD.Layer{S,D,V}) where {S,D,V}
     sort!(candidates, by=tup -> tup.first, rev=true)
 
     # keep first (width - 1) unchanged
-    new_layer = DD.Layer{S,D,V}(candidates[1:(r.maxwidth - 1)])
+    new_layer = Layer{S,D,V}(candidates[1:(r.max_width - 1)])
 
     # merge the rest:
     # - use largest capacity
     # - use predecessor for longest distance
     #   ==> does not keep all solutions!
-    rest = @view candidates[r.maxwidth:end]
+    rest = @view candidates[r.max_width:end]
     merged_state = rest[1].first
-    idx = argmax(map(tup -> tup.second.dist, rest))
-    merged_node = rest[idx].second
-    new_layer[merged_state] = DD.Node{S,D,V}(merged_node.dist, merged_node.inarc, false)
+    index = argmax(map(pair -> pair.second.distance, rest))
+    merged_node = rest[index].second
+    new_node = Node{S,D,V}(merged_node.distance, merged_node.inarc, false)
+    new_layer[merged_state] = new_node
 
     return new_layer
 end

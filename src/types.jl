@@ -29,12 +29,12 @@ The type parameters specify the (user-defined) **S**tate, variable **D**omain
 and objective **V**alue, respectively.
 """
 struct Node{S,D,V}
-    dist::V
+    distance::V
     inarc::Union{Arc{S,D,V},Nothing}
     exact::Bool
 
-    function Node{S,D,V}(dist, inarc=nothing, exact=true) where {S,D,V}
-        new(dist, inarc, exact)
+    function Node{S,D,V}(distance, inarc=nothing, exact=true) where {S,D,V}
+        new(distance, inarc, exact)
     end
 end
 
@@ -76,32 +76,30 @@ struct Diagram{S,D,V}
     variables::Vector{Int}
 end
 
-function Diagram(root::Layer{S,D,V}) where {S,D,V}
-    return Diagram{S,D,V}([], [root], [])
+function Diagram(initial::Layer{S,D,V}) where {S,D,V}
+    return Diagram{S,D,V}([], [initial], [])
 end
 
-function Diagram(inst)
-    state = initial_state(inst)
+function Diagram(instance)
+    state = initial_state(instance)
     S = typeof(state)
-    D = domain_type(inst)
-    V = value_type(inst)
+    D = domain_type(instance)
+    V = value_type(instance)
     node = Node{S,D,V}(zero(V))
     root = Layer{S,D,V}(state => node)
     return Diagram(root)
 end
-
-# TODO: improve reuse between Solution and SubProblem
 
 struct Solution{D,V}
     decisions::Vector{D}  # for all variables, order 1:n
     objective::V
 end
 
-struct SubProblem{S,D,V}
+struct Subproblem{S,D,V}
     # partial solution (assigned so far, in given order)
-    vars::Vector{Int}
-    decs::Vector{D}
-    dist::V
+    variables::Vector{Int}
+    decisions::Vector{D}
+    distance::V
 
     # state (to complete solution)
     state::S
