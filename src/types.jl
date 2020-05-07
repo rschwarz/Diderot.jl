@@ -22,25 +22,25 @@ end
 
 const Layer{S,D,V} = Dict{S,Node{S,D,V}}
 
-struct DecisionDiagram{S,D,V}
+struct Diagram{S,D,V}
     partial_sol::Vector{Int}      # given & fixed
 
     layers::Vector{Layer{S,D,V}}  # length n + 1
     variables::Vector{Int}        # length n
 end
 
-function DecisionDiagram(root::Layer{S,D,V}) where {S,D,V}
-    return DecisionDiagram{S,D,V}([], [root], [])
+function Diagram(root::Layer{S,D,V}) where {S,D,V}
+    return Diagram{S,D,V}([], [root], [])
 end
 
-function DecisionDiagram(inst)
+function Diagram(inst)
     state = initial_state(inst)
     S = typeof(state)
     D = domain_type(inst)
     V = value_type(inst)
     node = Node{S,D,V}(zero(V))
     root = Layer{S,D,V}(state => node)
-    return DecisionDiagram(root)
+    return Diagram(root)
 end
 
 # TODO: improve reuse between Solution and SubProblem

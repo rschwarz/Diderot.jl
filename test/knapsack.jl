@@ -1,8 +1,6 @@
 using Diderot: Arc, Node
 using Diderot.Knapsack: Instance, ByWeightDecr, RestrictLowDist, RelaxLowCap
 
-const N = Node{Int,Bool,Float64}
-
 @testset "model methods" begin
     inst = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
 
@@ -10,7 +8,7 @@ const N = Node{Int,Bool,Float64}
     @test Diderot.value_type(inst) == Float64
     @test Diderot.domain_type(inst) == Bool
 
-    dd = Diderot.DecisionDiagram(inst)
+    dd = Diderot.Diagram(inst)
 
     @test Diderot.next_variable(inst, dd, Diderot.VarsInOrder()) == 1
     @test Diderot.next_variable(inst, dd, ByWeightDecr()) == 1
@@ -26,8 +24,10 @@ const N = Node{Int,Bool,Float64}
 end
 
 @testset "top-down decision diagrams" begin
+    N = Node{Int,Bool,Float64}
+
     inst = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
-    dd = Diderot.DecisionDiagram(inst)
+    dd = Diderot.Diagram(inst)
     Diderot.top_down!(dd, inst)
 
     # layers and nodes
@@ -51,14 +51,14 @@ end
 
 @testset "longest path" begin
     inst = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
-    dd = Diderot.DecisionDiagram(inst)
+    dd = Diderot.Diagram(inst)
     Diderot.top_down!(dd, inst)
     sol = Diderot.longest_path(dd)
     @test sol.decisions == [false, true, true]
     @test sol.objective ≈ 5.0
 
     inst2 = Instance([3.0, 4.0, 2.0], [2, 3, 2], 4)
-    dd2 = Diderot.DecisionDiagram(inst2)
+    dd2 = Diderot.Diagram(inst2)
     Diderot.top_down!(dd2, inst2, var_order=ByWeightDecr())
     sol2 = Diderot.longest_path(dd2)
     @test sol2.decisions == [true, false, true]
@@ -69,7 +69,7 @@ end
     inst = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
 
     @testset "width 1" begin
-        dd = Diderot.DecisionDiagram(inst)
+        dd = Diderot.Diagram(inst)
         Diderot.top_down!(dd, inst, process_layer=RestrictLowDist(1))
         @test length(dd.layers) == 4
         @test all(l -> length(l) == 1, dd.layers)
@@ -80,7 +80,7 @@ end
     end
 
     @testset "width 2" begin
-        dd = Diderot.DecisionDiagram(inst)
+        dd = Diderot.Diagram(inst)
         Diderot.top_down!(dd, inst, process_layer=RestrictLowDist(2))
         @test length(dd.layers) == 4
         @test all(l -> length(l) in (1, 2), dd.layers)
@@ -95,7 +95,7 @@ end
     inst = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
 
     @testset "width 1" begin
-        dd = Diderot.DecisionDiagram(inst)
+        dd = Diderot.Diagram(inst)
         Diderot.top_down!(dd, inst, process_layer=RelaxLowCap(1))
         @test length(dd.layers) == 4
         @test all(l -> length(l) == 1, dd.layers)
@@ -106,7 +106,7 @@ end
     end
 
     @testset "width 2" begin
-        dd = Diderot.DecisionDiagram(inst)
+        dd = Diderot.Diagram(inst)
         Diderot.top_down!(dd, inst, process_layer=RelaxLowCap(2))
         @test length(dd.layers) == 4
         @test all(l -> length(l) in (1, 2), dd.layers)

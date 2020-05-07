@@ -1,4 +1,4 @@
-function Base.show(io::IO, dd::DecisionDiagram)
+function Base.show(io::IO, dd::Diagram)
     println(io, "already fixed: ", dd.partial_sol)
     println(io, "root: ", only(dd.layers[1]))
     for (l, var) in enumerate(dd.variables)
@@ -23,7 +23,7 @@ function add_transition(layer, new_state, new_node)
     end
 end
 
-function build_layer(instance, dd::DecisionDiagram{S,D,V}, variable) where {S,D,V}
+function build_layer(instance, dd::Diagram{S,D,V}, variable) where {S,D,V}
     layer = Layer{S,D,V}()
 
     # Collect new states, keep only "best" arcs.
@@ -50,7 +50,7 @@ function next_variable(inst, dd, var_order::VarsInOrder)
     return nothing
 end
 
-function top_down!(dd::DecisionDiagram{S,D,V}, instance;
+function top_down!(dd::Diagram{S,D,V}, instance;
                    var_order=VarsInOrder(), process_layer=identity) where {S,D,V}
     @assert length(dd.layers) == 1   # root layer
 
@@ -79,7 +79,7 @@ function top_down!(dd::DecisionDiagram{S,D,V}, instance;
     dd.layers[end] = Layer{S,D,V}(maxstate => maxnode)
 end
 
-function longest_path(dd::DecisionDiagram{S,D,V}) where {S,D,V}
+function longest_path(dd::Diagram{S,D,V}) where {S,D,V}
     # Collect path in reverse, from terminal to root.
     terminal = only(values(dd.layers[end]))
     num_vars =  length(dd.partial_sol) + length(dd.variables)
@@ -128,7 +128,7 @@ function branch_and_bound(inst; restrict, relax, var_order=VarsInOrder())
         root_layer = Layer{S,D,V}(current.state => Node{S,D,V}(current.dist))
 
         # solve restriction
-        dd = DecisionDiagram{S,D,V}(current.vars, [root_layer], [])
+        dd = Diagram{S,D,V}(current.vars, [root_layer], [])
         top_down!(dd, inst, var_order=var_order, process_layer=restrict)
         sol = longest_path(dd)
 
@@ -143,7 +143,7 @@ function branch_and_bound(inst; restrict, relax, var_order=VarsInOrder())
         # TODO: check if restriction was exact (then continue)
 
         # solve relaxation
-        dd = DecisionDiagram{S,D,V}(current.vars, [root_layer], [])
+        dd = Diagram{S,D,V}(current.vars, [root_layer], [])
         top_down!(dd, inst, var_order=var_order, process_layer=relax)
         sol = longest_path(dd)
 
