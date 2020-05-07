@@ -19,19 +19,6 @@ Diderot.value_type(instance::Instance) = Float64
 
 Diderot.initial_state(instance::Instance) = instance.capacity
 
-struct InOrder end
-
-function Diderot.next_variable(inst, dd, ::InOrder)
-    n = length(inst)
-    fixed = Diderot.fixed_vars(dd)
-    for i in 1:n
-        if !(i in fixed)  # TODO: efficient!
-            return i
-        end
-    end
-    return nothing
-end
-
 struct ByWeightDecr end
 
 function Diderot.next_variable(inst, dd, ::ByWeightDecr)

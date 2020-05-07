@@ -37,9 +37,21 @@ function build_layer(instance, dd::DecisionDiagram{S,D,V}, variable) where {S,D,
     return layer
 end
 
-# TODO: make var_order optional
-function top_down!(dd::DecisionDiagram{S,D,V}, instance, var_order;
-                   process_layer=identity) where {S,D,V}
+struct VarsInOrder end
+
+function next_variable(inst, dd, var_order::VarsInOrder)
+    n = length(inst)
+    fixed = fixed_vars(dd)
+    for i in 1:n
+        if !(i in fixed)  # TODO: efficient!
+            return i
+        end
+    end
+    return nothing
+end
+
+function top_down!(dd::DecisionDiagram{S,D,V}, instance;
+                   var_order=VarsInOrder(), process_layer=identity) where {S,D,V}
     @assert length(dd.layers) == 1   # root layer
 
     # Intermediate layers
@@ -97,9 +109,8 @@ function last_exact_layer(dd)
     return len(dd.layers)
 end
 
-# TODO: better way to pass type parameters?
 # TODO: pass solver object to store options, statistics, results?
-function branch_and_bound(inst, var_order, restrict, relax)
+function branch_and_bound(inst; restrict, relax, var_order=VarsInOrder())
     state = initial_state(inst)
     S = typeof(state)
     D = domain_type(inst)
@@ -118,7 +129,7 @@ function branch_and_bound(inst, var_order, restrict, relax)
 
         # solve restriction
         dd = DecisionDiagram{S,D,V}(current.vars, [root_layer], [])
-        top_down!(dd, inst, var_order, process_layer=restrict)
+        top_down!(dd, inst, var_order=var_order, process_layer=restrict)
         sol = longest_path(dd)
 
         # update incumbent
@@ -133,7 +144,7 @@ function branch_and_bound(inst, var_order, restrict, relax)
 
         # solve relaxation
         dd = DecisionDiagram{S,D,V}(current.vars, [root_layer], [])
-        top_down!(dd, inst, var_order, process_layer=relax)
+        top_down!(dd, inst, var_order=var_order, process_layer=relax)
         sol = longest_path(dd)
 
         # create subproblems if not pruned
