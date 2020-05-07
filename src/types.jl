@@ -99,8 +99,8 @@ end
 
 struct SubProblem{S,D,V}
     # partial solution (assigned so far, in given order)
-    vars::Array{Int}
-    decs::Array{D}
+    vars::Vector{Int}
+    decs::Vector{D}
     dist::V
 
     # state (to complete solution)
