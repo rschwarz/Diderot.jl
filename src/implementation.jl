@@ -118,12 +118,18 @@ function branch_and_bound(instance; restrict, relax, variable_order=InOrder())
     V = value_type(instance)
     original_problem = Subproblem(Int[], D[], zero(V), state)
 
-    problems = [original_problem] # TODO: use priority queue
+    # Assume maximization problems, so relaxation provides upper bound.
+    # Following the book, we will use a node's distance (from root) as priority
+    # and pick the smallest. This corresponds to picking nodes that are on early
+    # layers?!
+    #
+    # TODO: turn this into a configurable strategy.
+    problems = PriorityQueue(original_problem => zero(V))
     incumbent = Solution(D[], typemin(V))
 
     # Solve subproblems, one at a time.
     while !isempty(problems)
-        current = popfirst!(problems)
+        current = dequeue!(problems)
 
         root_layer = Layer{S,D,V}(current.state => Node{S,D,V}(current.distance))
 
@@ -168,8 +174,9 @@ function branch_and_bound(instance; restrict, relax, variable_order=InOrder())
                                  diagram.variables[1:cutset - 1])
                 decisions = vcat(current.decisions, new_decisions)
 
-                push!(problems, Subproblem(variables, decisions,
-                                           sub_node.distance, sub_state))
+                subproblem = Subproblem(variables, decisions,
+                                        sub_node.distance, sub_state)
+                problems[subproblem] = subproblem.distance
             end
         end
     end

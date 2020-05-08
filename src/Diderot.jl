@@ -1,5 +1,7 @@
 module Diderot
 
+using DataStructures
+
 include("types.jl")
 include("interface.jl")
 include("implementation.jl")
