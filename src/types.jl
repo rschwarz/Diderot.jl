@@ -43,12 +43,47 @@ end
 
 A layer of nodes in the decision diagram.
 
-Represented by mapping from (user-defined) states to the Node meta-data.
+Represented by mapping from (user-defined) states to the Node meta-data. Also
+has a flag `exact` to indicate whether all states are represented exactly
+(neither restricted nor relaxed).
 
 The type parameters specify the (user-defined) **S**tate, variable **D**omain
 and objective **V**alue, respectively.
 """
-const Layer{S,D,V} = Dict{S,Node{S,D,V}}
+struct Layer{S,D,V}
+    nodes::Dict{S,Node{S,D,V}}
+    exact::Bool
+
+    function Layer{S,D,V}(nodes=Dict(), exact=true) where {S,D,V}
+        return new(nodes, exact)
+    end
+end
+
+function Base.iterate(layer::Layer{S,D,V}) where {S,D,V}
+    return iterate(layer.nodes)
+end
+
+function Base.iterate(layer::Layer{S,D,V}, state) where {S,D,V}
+    return iterate(layer.nodes, state)
+end
+
+function Base.length(layer::Layer{S,D,V}) where {S,D,V}
+    return length(layer.nodes)
+end
+
+function Base.haskey(layer::Layer{S,D,V}, state::S) where {S,D,V}
+    return haskey(layer.nodes, state)
+end
+
+function Base.getindex(layer::Layer{S,D,V}, state::S) where {S,D,V}
+    return getindex(layer.nodes, state)
+end
+
+function Base.setindex!(
+    layer::Layer{S,D,V}, node::Node{S,D,V}, state::S
+) where {S,D,V}
+    return setindex!(layer.nodes, node, state)
+end
 
 """
     Diagram{S,D,V}
@@ -86,7 +121,7 @@ function Diagram(instance)
     D = domain_type(instance)
     V = value_type(instance)
     node = Node{S,D,V}(zero(V))
-    root = Layer{S,D,V}(state => node)
+    root = Layer{S,D,V}(Dict(state => node))
     return Diagram(root)
 end
 

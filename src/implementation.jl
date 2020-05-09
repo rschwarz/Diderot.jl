@@ -82,12 +82,12 @@ function top_down!(
             max_node = node
         end
     end
-    diagram.layers[end] = Layer{S,D,V}(max_state => max_node)
+    diagram.layers[end] = Layer{S,D,V}(Dict(max_state => max_node))
 end
 
 function longest_path(diagram::Diagram{S,D,V}) where {S,D,V}
     # Collect path in reverse, from terminal to root.
-    terminal = only(values(diagram.layers[end]))
+    terminal = only(values(diagram.layers[end].nodes))
     num_variables = length(diagram.partial_sol) + length(diagram.variables)
     decisions = Vector{D}(undef, num_variables)
     node, depth = terminal, length(diagram.layers) - 1
@@ -103,7 +103,7 @@ end
 
 function last_exact_layer(diagram)
     for (l, layer) in enumerate(diagram.layers)
-        if !all(node -> node.exact, values(layer))
+        if !layer.exact
             # Current layer has at least one relaxed node.
             @assert l > 1
 
@@ -136,7 +136,8 @@ function branch_and_bound(instance; restrict, relax, variable_order=InOrder())
     while !isempty(problems)
         current = dequeue!(problems)
 
-        root_layer = Layer{S,D,V}(current.state => Node{S,D,V}(current.distance))
+        root_layer = Layer{S,D,V}(
+            Dict(current.state => Node{S,D,V}(current.distance)))
 
         # solve restriction
         diagram = Diagram{S,D,V}(current.variables, [root_layer], [])

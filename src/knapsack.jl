@@ -66,7 +66,7 @@ function Diderot.process(
 
     candidates = collect(layer)
     sort!(candidates, by=tup -> tup.second.distance, rev=true)
-    return Layer{S,D,V}(candidates[1:restrict.max_width])
+    return Layer{S,D,V}(Dict(candidates[1:restrict.max_width]), false)
 end
 
 ### Relaxation
@@ -87,7 +87,7 @@ function Diderot.process(
     sort!(candidates, by=tup -> tup.first, rev=true)
 
     # keep first (width - 1) unchanged
-    new_layer = Layer{S,D,V}(candidates[1:(relax.max_width - 1)])
+    new_layer = Layer{S,D,V}(Dict(candidates[1:(relax.max_width - 1)]), false)
 
     # merge the rest:
     # - use largest capacity
