@@ -153,7 +153,10 @@ function branch_and_bound(instance; restrict, relax, variable_order=InOrder())
             incumbent = solution
         end
 
-        # TODO: check if restriction was exact (then continue)
+        # have we solved the subproblem already?
+        if all(l -> l.exact, diagram.layers)
+            continue
+        end
 
         # solve relaxation
         diagram = Diagram{S,D,V}(current.variables, [root_layer], [])
