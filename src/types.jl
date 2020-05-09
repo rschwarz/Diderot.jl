@@ -90,11 +90,30 @@ function Diagram(instance)
     return Diagram(root)
 end
 
+"""
+    Solution{D,V}
+
+A feasible solution, with decisions for all variables (in order) and the
+objective values.
+
+The type parameters specify the (user-defined) **S**tate, variable **D**omain
+and objective **V**alue, respectively.
+"""
 struct Solution{D,V}
     decisions::Vector{D}  # for all variables, order 1:n
     objective::V
 end
 
+"""
+    Subproblem{D,V}
+
+A subproblem in the context of branch-and-bound, as defined by an exact node in
+the diagram. It's represented by the partial solution given by a longest path
+from the root that node and the current state.
+
+The type parameters specify the (user-defined) **S**tate, variable **D**omain
+and objective **V**alue, respectively.
+"""
 struct Subproblem{S,D,V}
     # partial solution (assigned so far, in given order)
     variables::Vector{Int}
