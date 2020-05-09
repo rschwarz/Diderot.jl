@@ -71,8 +71,7 @@ end
 
     @testset "width 1" begin
         diagram = Diderot.Diagram(instance)
-        Diderot.top_down!(diagram, instance,
-                          process_layer=RestrictLowDistance(1))
+        Diderot.top_down!(diagram, instance, processing=RestrictLowDistance(1))
         @test length(diagram.layers) == 4
         @test all(l -> length(l) == 1, diagram.layers)
 
@@ -83,8 +82,7 @@ end
 
     @testset "width 2" begin
         diagram = Diderot.Diagram(instance)
-        Diderot.top_down!(diagram, instance,
-                          process_layer=RestrictLowDistance(2))
+        Diderot.top_down!(diagram, instance, processing=RestrictLowDistance(2))
         @test length(diagram.layers) == 4
         @test all(l -> length(l) in (1, 2), diagram.layers)
 
@@ -99,7 +97,7 @@ end
 
     @testset "width 1" begin
         diagram = Diderot.Diagram(instance)
-        Diderot.top_down!(diagram, instance, process_layer=RelaxLowCapacity(1))
+        Diderot.top_down!(diagram, instance, processing=RelaxLowCapacity(1))
         @test length(diagram.layers) == 4
         @test all(l -> length(l) == 1, diagram.layers)
 
@@ -110,7 +108,7 @@ end
 
     @testset "width 2" begin
         diagram = Diderot.Diagram(instance)
-        Diderot.top_down!(diagram, instance, process_layer=RelaxLowCapacity(2))
+        Diderot.top_down!(diagram, instance, processing=RelaxLowCapacity(2))
         @test length(diagram.layers) == 4
         @test all(l -> length(l) in (1, 2), diagram.layers)
 

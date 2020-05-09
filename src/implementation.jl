@@ -50,9 +50,14 @@ function next_variable(instance, diagram, variable_order::InOrder)
     return nothing
 end
 
-function top_down!(diagram::Diagram{S,D,V}, instance;
-                   variable_order=InOrder(),
-                   process_layer=identity) where {S,D,V}
+struct KeepAllNodes end
+
+process(::KeepAllNodes, layer) = layer
+
+function top_down!(
+    diagram::Diagram{S,D,V}, instance;
+    variable_order=InOrder(), processing=KeepAllNodes()
+) where {S,D,V}
     @assert length(diagram.layers) == 1   # root layer
 
     # Intermediate layers
@@ -63,7 +68,7 @@ function top_down!(diagram::Diagram{S,D,V}, instance;
         end
 
         layer = build_layer(instance, diagram, variable)
-        layer = process_layer(layer)   # restrict/relax
+        layer = process(processing, layer)   # restrict/relax
 
         push!(diagram.layers, layer)
         push!(diagram.variables, variable)
@@ -135,8 +140,8 @@ function branch_and_bound(instance; restrict, relax, variable_order=InOrder())
 
         # solve restriction
         diagram = Diagram{S,D,V}(current.variables, [root_layer], [])
-        top_down!(diagram, instance, variable_order=variable_order,
-                  process_layer=restrict)
+        top_down!(diagram, instance,
+                  variable_order=variable_order, processing=restrict)
         solution = longest_path(diagram)
 
         # update incumbent
@@ -151,8 +156,8 @@ function branch_and_bound(instance; restrict, relax, variable_order=InOrder())
 
         # solve relaxation
         diagram = Diagram{S,D,V}(current.variables, [root_layer], [])
-        top_down!(diagram, instance, variable_order=variable_order,
-                  process_layer=relax)
+        top_down!(diagram, instance;
+                  variable_order=variable_order, processing=relax)
         solution = longest_path(diagram)
 
         # create subproblems if not pruned

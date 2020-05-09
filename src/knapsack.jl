@@ -57,14 +57,16 @@ struct RestrictLowDistance
     max_width::Int
 end
 
-function (r::RestrictLowDistance)(layer::Layer{S,D,V}) where {S,D,V}
-    if length(layer) <= r.max_width
+function Diderot.process(
+    restrict::RestrictLowDistance, layer::Layer{S,D,V}
+) where {S,D,V}
+    if length(layer) <= restrict.max_width
         return layer
     end
 
     candidates = collect(layer)
     sort!(candidates, by=tup -> tup.second.distance, rev=true)
-    return Layer{S,D,V}(candidates[1:r.max_width])
+    return Layer{S,D,V}(candidates[1:restrict.max_width])
 end
 
 ### Relaxation
@@ -73,8 +75,10 @@ struct RelaxLowCapacity
     max_width::Int
 end
 
-function (r::RelaxLowCapacity)(layer::Layer{S,D,V}) where {S,D,V}
-    if length(layer) <= r.max_width
+function Diderot.process(
+    relax::RelaxLowCapacity, layer::Layer{S,D,V}
+) where {S,D,V}
+    if length(layer) <= relax.max_width
         return layer
     end
 
@@ -83,13 +87,13 @@ function (r::RelaxLowCapacity)(layer::Layer{S,D,V}) where {S,D,V}
     sort!(candidates, by=tup -> tup.first, rev=true)
 
     # keep first (width - 1) unchanged
-    new_layer = Layer{S,D,V}(candidates[1:(r.max_width - 1)])
+    new_layer = Layer{S,D,V}(candidates[1:(relax.max_width - 1)])
 
     # merge the rest:
     # - use largest capacity
     # - use predecessor for longest distance
     #   ==> does not keep all solutions!
-    rest = @view candidates[r.max_width:end]
+    rest = @view candidates[relax.max_width:end]
     merged_state = rest[1].first
     index = argmax(map(pair -> pair.second.distance, rest))
     merged_node = rest[index].second
