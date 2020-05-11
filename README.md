@@ -22,6 +22,9 @@ domain_type(instance)
 # for objective function, e.g. Float64
 value_type(instance)
 
+# number of decision variables == depth of decision diagram
+Base.length(instance)
+
 # used for root node, e.g. capacity as Int
 intial_state(instance)
 
