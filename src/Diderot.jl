@@ -9,5 +9,6 @@ include("implementation.jl")
 ## Specific Implementation for problem classes.
 
 include("knapsack.jl")
+include("setcover.jl")
 
 end
