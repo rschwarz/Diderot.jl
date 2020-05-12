@@ -5,7 +5,7 @@ using ..Diderot
 using ..Diderot: Arc, Node, Layer
 
 struct Instance
-    values::Vector{Float64}         # minimize total
+    values::Vector{Float64}         # should be negative (is maximized)
     sets::SparseMatrixCSC{Bool,Int} # rows == sets to cover
 
     function Instance(values, sets)
@@ -18,7 +18,7 @@ end
 Base.length(instance::Instance) = length(instance.values)
 Diderot.domain_type(instance::Instance) = Bool
 Diderot.value_type(instance::Instance) = Float64
-Diderot.initial_state(instance::Instance) = BitSet(1:length(instance))
+Diderot.initial_state(instance::Instance) = BitSet(1:size(instance.sets, 1))
 
 function Diderot.transitions(instance::Instance, state, variable)
     results = Dict{Arc{BitSet, Bool, Float64}, BitSet}()
@@ -27,8 +27,8 @@ function Diderot.transitions(instance::Instance, state, variable)
     covered = BitSet(findall(instance.sets[:, variable]))
 
     # true: select element, remove all sets that are covered.
-    cost = -1.0 * instance.value(variable)   # negated since it's maximized
-    results[state, true, cost] = setdiff(state, covered)
+    results[Arc(state, true, instance.values[variable])] =
+        setdiff(state, covered)
 
     # false: don't select element, state is unchanged.
     #
