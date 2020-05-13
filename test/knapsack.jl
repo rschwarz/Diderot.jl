@@ -1,6 +1,5 @@
-using Diderot: Arc, Node
-using Diderot.Knapsack: Instance, DecreasingWeight, RestrictLowDistance,
-                        RelaxLowCapacity
+using Diderot: Arc, Node, RestrictLowDistance
+using Diderot.Knapsack: Instance, DecreasingWeight, RelaxLowCapacity
 
 @testset "model methods" begin
     instance = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)

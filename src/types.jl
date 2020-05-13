@@ -1,3 +1,4 @@
+using AutoHashEquals
 
 """
     Arc{S,D,V}
@@ -10,7 +11,7 @@ It points to the original/previous state and also stores the decision made
 The type parameters specify the (user-defined) **S**tate, variable **D**omain
 and objective **V**alue, respectively.
 """
-struct Arc{S,D,V}
+@auto_hash_equals struct Arc{S,D,V}
     tail::S
     decision::D
     value::V
@@ -28,7 +29,7 @@ whether the state is *exact*, as opposed to *relaxed*.
 The type parameters specify the (user-defined) **S**tate, variable **D**omain
 and objective **V**alue, respectively.
 """
-struct Node{S,D,V}
+@auto_hash_equals struct Node{S,D,V}
     distance::V
     inarc::Union{Arc{S,D,V},Nothing}
     exact::Bool
@@ -50,7 +51,7 @@ has a flag `exact` to indicate whether all states are represented exactly
 The type parameters specify the (user-defined) **S**tate, variable **D**omain
 and objective **V**alue, respectively.
 """
-struct Layer{S,D,V}
+@auto_hash_equals struct Layer{S,D,V}
     nodes::Dict{S,Node{S,D,V}}
     exact::Bool
 
@@ -105,7 +106,7 @@ already assigned outside this diagram (in the context of branch-and-bound).
 The type parameters specify the (user-defined) **S**tate, variable **D**omain
 and objective **V**alue, respectively.
 """
-struct Diagram{S,D,V}
+@auto_hash_equals struct Diagram{S,D,V}
     partial_sol::Vector{Int}
     layers::Vector{Layer{S,D,V}}
     variables::Vector{Int}
@@ -134,7 +135,7 @@ objective values.
 The type parameters specify the (user-defined) **S**tate, variable **D**omain
 and objective **V**alue, respectively.
 """
-struct Solution{D,V}
+@auto_hash_equals struct Solution{D,V}
     decisions::Vector{D}  # for all variables, order 1:n
     objective::V
 end
@@ -149,7 +150,7 @@ from the root that node and the current state.
 The type parameters specify the (user-defined) **S**tate, variable **D**omain
 and objective **V**alue, respectively.
 """
-struct Subproblem{S,D,V}
+@auto_hash_equals struct Subproblem{S,D,V}
     # partial solution (assigned so far, in given order)
     variables::Vector{Int}
     decisions::Vector{D}
