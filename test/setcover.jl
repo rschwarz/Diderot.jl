@@ -54,3 +54,31 @@ end
     # extract solution
     @test Diderot.longest_path(diagram) == Diderot.Solution([0, 1, 0, 1], -5.0)
 end
+
+@testset "restriction" begin
+    values = [-2.0, -3.0, -4.0, -2.0]
+    sets = sparse(Bool[1 1 0 0; 0 1 1 0; 0 0 1 1])
+    instance = SC.Instance(values, sets)
+
+    @testset "width 1" begin
+        diagram = Diderot.Diagram(instance)
+        Diderot.top_down!(diagram, instance, processing=RestrictLowDistance(1))
+        @test length(diagram.layers) == 5
+        @test all(l -> length(l) == 1, diagram.layers)
+
+        solution = Diderot.longest_path(diagram)
+        @test solution.decisions == [0, 1, 0, 1]
+        @test solution.objective ≈ -5.0 # optimal!
+    end
+
+    @testset "width 2" begin
+        diagram = Diderot.Diagram(instance)
+        Diderot.top_down!(diagram, instance, processing=RestrictLowDistance(2))
+        @test length(diagram.layers) == 5
+        @test all(l -> length(l) <= 2, diagram.layers)
+
+        solution = Diderot.longest_path(diagram)
+        @test solution.decisions == [0, 1, 0, 1]
+        @test solution.objective ≈ -5.0 # optimal!
+    end
+end
