@@ -4,6 +4,10 @@
 CurrentModule = Diderot
 ```
 
+```@docs
+Diderot
+```
+
 ## Types
 
 The type parameters specify the (user-defined) **S**tate, variable **D**omain
