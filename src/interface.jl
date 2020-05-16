@@ -6,18 +6,18 @@ Initial state for a given instance (used for root node).
 function initial_state end
 
 """
-    value_type(instance)
-
-The (numeric) type used in the objective function.
-"""
-function value_type end
-
-"""
     domain_type(instance)
 
 The type used as domain for the decision variables.
 """
 function domain_type end
+
+"""
+    value_type(instance)
+
+The (numeric) type used in the objective function.
+"""
+function value_type end
 
 """
     next_variable(instance, diagram::Diagram{S,D,V}, variable_order)::Int
