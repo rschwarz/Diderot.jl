@@ -48,35 +48,11 @@ function Diderot.transitions(instance::Instance, state, variable)
     return results
 end
 
-struct RelaxLargest
-    max_width::Int
-end
-
-function Diderot.process(
-    relax::RelaxLargest, layer::Layer{S,D,V}
-) where {S,D,V}
-    if length(layer) <= relax.max_width
-        return layer
-    end
-
-    # sort states by number of sets to cover still
-    candidates = collect(layer)
-    sort!(candidates, by=tup -> length(tup.first))
-
-    # keep first (width - 1) unchanged
-    new_layer = Layer{S,D,V}(Dict(candidates[1:(relax.max_width - 1)]), false)
-
-    # merge the rest:
-    # - take intersection of sets to cover
-    # - use predecessor for longest distance
-    rest = @view candidates[relax.max_width:end]
-    merged_state = foldl(intersect, first.(rest))
-    index = argmax(map(pair -> pair.second.distance, rest))
-    merged_node = rest[index].second
-    new_node = Node{S,D,V}(merged_node.distance, merged_node.inarc, false)
-    new_layer[merged_state] = new_node
-
-    return new_layer
-end
+# For relaxation:
+# - Keep states with smallest sets-to-cover.
+# - Merge states by intersection.
+sort_by(tuple) = length(tuple.first)
+merge = intersect
+relax(max_width) = Diderot.RelaxAllInOne(max_width, merge, sort_by)
 
 end

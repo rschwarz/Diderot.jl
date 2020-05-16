@@ -11,6 +11,7 @@ include("implementation.jl")
 ## Generic implementation
 
 include("restriction.jl")
+include("relaxation.jl")
 
 ## Specific implementation for problem classes.
 
