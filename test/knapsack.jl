@@ -1,5 +1,5 @@
 using Diderot: Arc, Node, RestrictLowDistance
-using Diderot.Knapsack: Instance, DecreasingWeight, RelaxLowCapacity
+using Diderot.Knapsack: Instance, DecreasingWeight, relax
 
 @testset "model methods" begin
     instance = Instance([4.0, 3.0, 2.0], [3, 2, 2], 4)
@@ -96,7 +96,7 @@ end
 
     @testset "width 1" begin
         diagram = Diderot.Diagram(instance)
-        Diderot.top_down!(diagram, instance, processing=RelaxLowCapacity(1))
+        Diderot.top_down!(diagram, instance, processing=relax(1))
         @test length(diagram.layers) == 4
         @test all(l -> length(l) == 1, diagram.layers)
 
@@ -107,7 +107,7 @@ end
 
     @testset "width 2" begin
         diagram = Diderot.Diagram(instance)
-        Diderot.top_down!(diagram, instance, processing=RelaxLowCapacity(2))
+        Diderot.top_down!(diagram, instance, processing=relax(2))
         @test length(diagram.layers) == 4
         @test all(l -> length(l) in (1, 2), diagram.layers)
 
@@ -124,21 +124,21 @@ end
 
     @testset "width 1" begin
         solution = Diderot.branch_and_bound(
-            instance, restrict=RestrictLowDistance(1), relax=RelaxLowCapacity(2))
+            instance, restrict=RestrictLowDistance(1), relax=relax(2))
         @test solution.decisions == [false, true, true]
         @test solution.objective ≈ 5.0
     end
 
     @testset "width 2" begin
         solution = Diderot.branch_and_bound(
-            instance, restrict=RestrictLowDistance(2), relax=RelaxLowCapacity(2))
+            instance, restrict=RestrictLowDistance(2), relax=relax(2))
         @test solution.decisions == [false, true, true]
         @test solution.objective ≈ 5.0
     end
 
     @testset "width 3" begin
         solution = Diderot.branch_and_bound(
-            instance, restrict=RestrictLowDistance(3), relax=RelaxLowCapacity(3))
+            instance, restrict=RestrictLowDistance(3), relax=relax(3))
         @test solution.decisions == [false, true, true]
         @test solution.objective ≈ 5.0
     end
@@ -146,7 +146,7 @@ end
     @testset "n 5, width 2" begin
         instance2 = Instance([5, 3, 2, 7, 4], [2, 8, 4, 2, 5], 10)
         solution = Diderot.branch_and_bound(
-            instance2, restrict=RestrictLowDistance(2), relax=RelaxLowCapacity(2))
+            instance2, restrict=RestrictLowDistance(2), relax=relax(2))
         @test solution.decisions == [1, 0, 0, 1, 1]
         @test solution.objective ≈ 16.0
     end

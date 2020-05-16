@@ -90,7 +90,7 @@ end
 
     @testset "width 1" begin
         diagram = Diderot.Diagram(instance)
-        Diderot.top_down!(diagram, instance, processing=SC.RelaxLargest(1))
+        Diderot.top_down!(diagram, instance, processing=SC.relax(1))
         @test length(diagram.layers) == 6
         @test all(l -> length(l) == 1, diagram.layers)
 
@@ -100,7 +100,7 @@ end
 
     @testset "width 2" begin
         diagram = Diderot.Diagram(instance)
-        Diderot.top_down!(diagram, instance, processing=SC.RelaxLargest(2))
+        Diderot.top_down!(diagram, instance, processing=SC.relax(2))
         @test length(diagram.layers) == 6
         @test all(l -> length(l) <= 2, diagram.layers)
 
@@ -118,14 +118,14 @@ end
 
     @testset "width 1" begin
         solution = Diderot.branch_and_bound(
-            instance, restrict=RestrictLowDistance(1), relax=SC.RelaxLargest(2))
+            instance, restrict=RestrictLowDistance(1), relax=SC.relax(2))
         @test solution.decisions == [0, 1, 0, 1, 0]
         @test solution.objective ≈ -5.0
     end
 
     @testset "width 2" begin
         solution = Diderot.branch_and_bound(
-            instance, restrict=RestrictLowDistance(2), relax=SC.RelaxLargest(2))
+            instance, restrict=RestrictLowDistance(2), relax=SC.relax(2))
         @test solution.decisions == [0, 1, 0, 1, 0]
         @test solution.objective ≈ -5.0
     end

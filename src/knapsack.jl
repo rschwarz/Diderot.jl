@@ -53,36 +53,11 @@ end
 
 ### Relaxation
 
-struct RelaxLowCapacity
-    max_width::Int
-end
-
-function Diderot.process(
-    relax::RelaxLowCapacity, layer::Layer{S,D,V}
-) where {S,D,V}
-    if length(layer) <= relax.max_width
-        return layer
-    end
-
-    # sort states by decreasing capacity
-    candidates = collect(layer)
-    sort!(candidates, by=tup -> tup.first, rev=true)
-
-    # keep first (width - 1) unchanged
-    new_layer = Layer{S,D,V}(Dict(candidates[1:(relax.max_width - 1)]), false)
-
-    # merge the rest:
-    # - use largest capacity
-    # - use predecessor for longest distance
-    #   ==> does not keep all solutions!
-    rest = @view candidates[relax.max_width:end]
-    merged_state = rest[1].first
-    index = argmax(map(pair -> pair.second.distance, rest))
-    merged_node = rest[index].second
-    new_node = Node{S,D,V}(merged_node.distance, merged_node.inarc, false)
-    new_layer[merged_state] = new_node
-
-    return new_layer
-end
+# For relaxation:
+# - Keep states with largest remaining capacity.
+# - Merge states by maximum value.
+sort_by(tuple) = -tuple.first
+merge = max
+relax(max_width) = Diderot.RelaxAllInOne(max_width, merge, sort_by)
 
 end # module
