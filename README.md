@@ -6,56 +6,32 @@ Decision Diagrams for Discrete Optimization in Julia.
 [![Codecov](https://codecov.io/gh/rschwarz/Diderot.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/rschwarz/Diderot.jl)
 
 Provides a generic implementation of decisision diagrams (top-down construction
-of layered state transition graph). Supports restrictions and relaxations
-through user-defined layer processing. Implements simple branch-and-bound based
-on subproblems defined by nodes in an exact cutset of the diagram.
+of layered state transition graph). Implements a branch-and-bound algorithms
+with subproblems defined by nodes in an exact cutset of the diagram.
 
-## Usage
+To support new problem classes, the several methods have to be implemented that
+are dispatched on the user-defined types for the instance, describing the states
+and transition functions.
 
-The user has to implement several methods to define the model. These are
-dispatched over user-defined types for the instance data and states.
+The solver behavior (restrictions, relaxations, variable order, diagram width)
+can also be fully customized through user-defined layer processing.
 
-```julia
-# for decision variables, e.g. Int
-domain_type(instance)
+## Motivation
 
-# for objective function, e.g. Float64
-value_type(instance)
+The package is mostly written as a learning experiment. Implementing an idea
+gives a deeper understanding of the challenges than just reading about it.
 
-# number of decision variables == depth of decision diagram
-Base.length(instance)
+The appeal of decision diagrams for discrete optimization is two-fold:
 
-# used for root node, e.g. capacity as Int
-intial_state(instance)
-
-# state transition function, including cost
-transitions(instance, state, variables)
-
-# optional: dynamic variable order as index
-next_variable(instance, diagram, variable_order)
-```
-
-This already allows solving problems by generating the exact (complete) decision
-diagram and extracting the values following a longest path.
-
-```julia
-diagram = Diagram(instance)
-top_down!(diagram, instance)
-solution = longest_path(diagram)
-```
-
-To use the branch-and-bound algorithm, two strategies for restriction and
-relaxation of the diagram have to be provided.
-
-```julia
-solution = branch_and_bound(instance, restrict=Restrict(), relax=Relax())
-```
+1. The simplicity of the algorithm makes implementation from scratch a
+   reasonable endeavor.
+2. It seems that the DD-based branch-and-bound lends itself to parallelization,
+   yielding better speed-ups than MIP solvers.
 
 ## Limitations
 
-This is (still) mostly a naive text book implementation for learning purposes.
-I'm sure there's room for improvement in the choice of data structures and
-avoing frequent allocation.
+This is (still) mostly a naive text book implementation. I'm sure there's room
+for improvement in the choice of data structures and avoing frequent allocation.
 
 It's currently assumed that the objective function is to be maximized, and the
 transition values are combined by addition. That is, we're looking for a longest
@@ -76,7 +52,9 @@ Models and methods for some specific problem classes are also implemented in the
 context of this package as submodules. The main motivation is test-driving the
 current API, to make sure it's sufficiently general and not too verbose.
 
-This currently includes only the Knapsack Problem.
+Currently included are:
+- Binary Knapsack Problem.
+- Set Cover Problem.
 
 ## References
 
