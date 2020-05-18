@@ -1,4 +1,3 @@
-@doc read(joinpath(dirname(@__DIR__), "README.md"), String) ->
 module Diderot
 
 using DataStructures
@@ -18,5 +17,12 @@ include("relaxation.jl")
 
 include("knapsack.jl")
 include("setcover.jl")
+
+
+# add README as docstring to module
+@doc let path = joinpath(dirname(@__DIR__), "README.md")
+    include_dependency(path)
+    read(path, String)
+end Diderot
 
 end
