@@ -35,4 +35,35 @@ process
 
 ## Usage
 
+Solving an instance by branch-and-bound.
 
+```julia
+solution = branch_and_bound(instance, restrict=Restrict(), relax=Relax())
+```
+
+```@docs
+branch_and_bound
+```
+
+Solving an instance with a single exact diagram:
+
+```julia
+diagram = Diagram(instance)
+top_down!(diagram, instance)
+solution = longest_path(diagram)
+```
+
+Similarly, a single restriction or relaxation can be computed.
+
+```@docs
+top_down!
+longest_path
+```
+
+## Generic Implementation
+
+TBD
+
+## Internals
+
+TBD
