@@ -1,5 +1,11 @@
 using AutoHashEquals
 
+# The type parameters specify the (user-defined)
+#   S: state
+#   D: variable domain
+#   V: objective value
+
+
 """
     Arc{S,D,V}
 
@@ -7,9 +13,6 @@ An arc in the decision diagram, representing a state transition.
 
 It points to the original/previous state and also stores the decision made
 (variable assignment) as well as the contribution to the objective function.
-
-The type parameters specify the (user-defined) **S**tate, variable **D**omain
-and objective **V**alue, respectively.
 """
 @auto_hash_equals struct Arc{S,D,V}
     tail::S
@@ -25,9 +28,6 @@ Meta-data for a node in the decision diagram.
 Stores the distance from the root node on the longest path so far, the
 ingoing arc on such a path (but no other ingoing arcs) and a flag to specify
 whether the state is *exact*, as opposed to *relaxed*.
-
-The type parameters specify the (user-defined) **S**tate, variable **D**omain
-and objective **V**alue, respectively.
 """
 @auto_hash_equals struct Node{S,D,V}
     distance::V
@@ -47,9 +47,6 @@ A layer of nodes in the decision diagram.
 Represented by mapping from (user-defined) states to the Node meta-data. Also
 has a flag `exact` to indicate whether all states are represented exactly
 (neither restricted nor relaxed).
-
-The type parameters specify the (user-defined) **S**tate, variable **D**omain
-and objective **V**alue, respectively.
 """
 @auto_hash_equals struct Layer{S,D,V}
     nodes::Dict{S,Node{S,D,V}}
@@ -102,9 +99,6 @@ stored. Note that the constructed diagram will have N+1 layers for N variables.
 
 There is also a property `partial_sol` containing indices of variables that are
 already assigned outside this diagram (in the context of branch-and-bound).
-
-The type parameters specify the (user-defined) **S**tate, variable **D**omain
-and objective **V**alue, respectively.
 """
 @auto_hash_equals struct Diagram{S,D,V}
     partial_sol::Vector{Int}
@@ -131,9 +125,6 @@ end
 
 A feasible solution, with decisions for all variables (in order) and the
 objective values.
-
-The type parameters specify the (user-defined) **S**tate, variable **D**omain
-and objective **V**alue, respectively.
 """
 @auto_hash_equals struct Solution{D,V}
     decisions::Vector{D}  # for all variables, order 1:n
@@ -146,9 +137,6 @@ end
 A subproblem in the context of branch-and-bound, as defined by an exact node in
 the diagram. It's represented by the partial solution given by a longest path
 from the root that node and the current state.
-
-The type parameters specify the (user-defined) **S**tate, variable **D**omain
-and objective **V**alue, respectively.
 """
 @auto_hash_equals struct Subproblem{S,D,V}
     # partial solution (assigned so far, in given order)

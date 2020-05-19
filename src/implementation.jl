@@ -54,6 +54,19 @@ struct KeepAllNodes end
 
 process(::KeepAllNodes, layer) = layer
 
+"""
+    top_down!(diagram::Diagram{S,D,V}, instance; variable_order, processing)
+
+Build a decision diagram for given instance. It is developed layer by layer,
+from the top, by following the state transitions. The first layer with a single
+root node should already be present in the diagram.
+
+Without any layer processing, the diagram will be exact, that is will contain a
+path representing an optimal solution.
+
+Restrictions or relaxations are achieved by dropping or merging the nodes and
+states in each layer.
+"""
 function top_down!(
     diagram::Diagram{S,D,V}, instance;
     variable_order=InOrder(), processing=KeepAllNodes()
@@ -85,6 +98,11 @@ function top_down!(
     diagram.layers[end] = Layer{S,D,V}(Dict(max_state => max_node))
 end
 
+"""
+    longest_path(diagram::Diagram{S,D,V})
+
+Extract optimal solution by following a longest path from root to terminal.
+"""
 function longest_path(diagram::Diagram{S,D,V}) where {S,D,V}
     # Collect path in reverse, from terminal to root.
     terminal = only(values(diagram.layers[end].nodes))
@@ -116,6 +134,14 @@ function last_exact_layer(diagram)
 end
 
 # TODO: pass solver object to store options, statistics, results?
+"""
+    branch_and_bound(instance; restrict, relax, variable_order)
+
+Solve given instance using branch-and-bound. For each subproblem, a restriction
+is computed to update the incumbent. Then a relaxation is computed. If the
+problem can not be pruned from the relaxation bound, new subproblems are created
+from an exact cutset in the relaxation's diagram.
+"""
 function branch_and_bound(instance; restrict, relax, variable_order=InOrder())
     state = initial_state(instance)
     S = typeof(state)
