@@ -2,6 +2,8 @@
 
 Decision Diagrams for Discrete Optimization in Julia.
 
+[![](https://img.shields.io/badge/docs-stable-blue.svg)](https://rschwarz.github.io/Diderot.jl/stable)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://rschwarz.github.io/Diderot.jl/dev)
 [![Build Status](https://travis-ci.com/rschwarz/Diderot.jl.svg?branch=master)](https://travis-ci.com/rschwarz/Diderot.jl)
 [![Codecov](https://codecov.io/gh/rschwarz/Diderot.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/rschwarz/Diderot.jl)
 
