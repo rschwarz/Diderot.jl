@@ -17,6 +17,7 @@ include("relaxation.jl")
 
 include("knapsack.jl")
 include("setcover.jl")
+include("indexfund.jl")
 
 
 # add README as docstring to module
