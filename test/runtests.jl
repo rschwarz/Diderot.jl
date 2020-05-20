@@ -12,3 +12,7 @@ end
 @testset "Set Cover" begin
     include("setcover.jl")
 end
+
+@testset "Index Fund" begin
+    include("indexfund.jl")
+end
