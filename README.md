@@ -57,6 +57,7 @@ current API, to make sure it's sufficiently general and not too verbose.
 Currently included are:
 - Binary Knapsack Problem.
 - Set Cover Problem.
+- Index Fund Construction (as defined in [Optimization Methods in Finance](https://doi.org/10.1017/9781107297340))
 
 ## References
 

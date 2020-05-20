@@ -20,6 +20,10 @@ It points to the original/previous state and also stores the decision made
     value::V
 end
 
+function Base.isapprox(x::Arc{S,D,V}, y::Arc{S,D,V}) where {S,D,V}
+    return x.tail == y.tail && x.decision == y.decision && x.value ≈ y.value
+end
+
 """
     Node{S,D,V}
 
@@ -37,6 +41,10 @@ whether the state is *exact*, as opposed to *relaxed*.
     function Node{S,D,V}(distance, inarc=nothing, exact=true) where {S,D,V}
         new(distance, inarc, exact)
     end
+end
+
+function Base.isapprox(x::Node{S,D,V}, y::Node{S,D,V}) where {S,D,V}
+    return x.distance ≈ y.distance && x.inarc ≈ y.inarc && x.exact == y.exact
 end
 
 """
