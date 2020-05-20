@@ -30,13 +30,13 @@ function Diderot.transitions(instance::Instance, state, variable)
     results = Dict{Arc{BitSet, Int, Float64}, BitSet}()
 
     N = length(instance)
-    weight = instance.weight[variable]
+    weights = instance.weights[variable]
     similarity = instance.similarity[:, variable]
 
     # Could we add another stock to the fund?
     if length(state) < instance.number
         for repr in setdiff(1:N, state)
-            value = weight * similarity[repr]
+            value = weights * similarity[repr]
             results[Arc(state, repr, value)] = union(state, repr)
         end
     end
@@ -50,7 +50,7 @@ function Diderot.transitions(instance::Instance, state, variable)
                 best_similarity = similarity[repr]
             end
         end
-        value = weight * best_similarity
+        value = weights * best_similarity
         results[Arc(state, best_repr, value)] = state
     end
 
@@ -61,7 +61,7 @@ end
 #  - Merge states by intersection.
 merge = intersect
 #  - Keep smallest states.
-sort_by(pair) = length(tuple.first)
+sort_by(pair) = length(pair.first)
 
 relax(max_width) = Diderot.RelaxAllInOne(max_width, intersect, sort_by)
 
