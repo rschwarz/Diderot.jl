@@ -7,9 +7,10 @@ Decision Diagrams for Discrete Optimization in Julia.
 [![Build Status](https://travis-ci.com/rschwarz/Diderot.jl.svg?branch=master)](https://travis-ci.com/rschwarz/Diderot.jl)
 [![Codecov](https://codecov.io/gh/rschwarz/Diderot.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/rschwarz/Diderot.jl)
 
-Provides a generic implementation of decisision diagrams (top-down construction
+Provides a generic implementation of decision diagrams (top-down construction
 of layered state transition graph). Implements a branch-and-bound algorithms
-with subproblems defined by nodes in an exact cutset of the diagram.
+with subproblems defined by nodes in an exact
+[cutset](https://en.wikipedia.org/wiki/Cut_%28graph_theory%29) of the diagram.
 
 To support new problem classes, the several methods have to be implemented that
 are dispatched on the user-defined types for the instance, describing the states
