@@ -10,7 +10,7 @@ Decision Diagrams for Discrete Optimization in Julia.
 Provides a generic implementation of decision diagrams (top-down construction
 of layered state transition graph). Implements a branch-and-bound algorithms
 with subproblems defined by nodes in an exact
-[cutset](https://en.wikipedia.org/wiki/Cut_%28graph_theory%29) of the diagram.
+[cutset](https://en.wikipedia.org/wiki/Vertex_separator) of the diagram.
 
 To support new problem classes, the several methods have to be implemented that
 are dispatched on the user-defined types for the instance, describing the states
