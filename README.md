@@ -75,3 +75,12 @@ lot of valuable resources, in particular the INFORMS article
 Pull requests with various forms of contributions are very welcome. In
 particular, I would appreciate suggestions to simplify the current interface,
 improve overall performance or cover more problem classes.
+
+## Related Work
+
+- [DDX10](http://www.andrew.cmu.edu/user/vanhoeve/mdd/code/DDX10.zip): Parallel branch-and-bound (C++, X10).
+- [ryanjoneil/tsppd-dd](https://github.com/ryanjoneil/tsppd-dd): TSP with pickup and delivery times (Go).
+- [rkimura47/pymdd](https://github.com/rkimura47/pymdd): Generic implementation of MDDs (Python).
+- [ac-tuwien/pymhlib](https://github.com/ac-tuwien/pymhlib/blob/master/pymhlib/decision_diag.py): DD-based relaxation (Python).
+- [vcoppe/mdd-solver](https://github.com/vcoppe/mdd-solver): Generic solver library (Java).
+- [xgillard/ddo](https://github.com/xgillard/ddo): Generic solver (Rust).
