@@ -1,4 +1,4 @@
-[![](docs/img/logo.svg)](https://github.com/rschwarz/Diderot.jl)
+[![](docs/src/assets/logo.svg)](https://github.com/rschwarz/Diderot.jl)
 
 Decision Diagrams for Discrete Optimization in Julia.
 
