@@ -12,19 +12,18 @@ of layered state transition graph). Implements a branch-and-bound algorithms
 with subproblems defined by nodes in an exact
 [cutset](https://en.wikipedia.org/wiki/Vertex_separator) of the diagram.
 
-To support new problem classes, the several methods have to be implemented that
+To support new problem classes, several methods have to be implemented that
 are dispatched on the user-defined types for the instance, describing the states
-and transition functions.
+and transitions.
 
 The solver behavior (restrictions, relaxations, variable order, diagram width)
 can also be fully customized through user-defined layer processing.
 
 ## Motivation
 
-The package is mostly written as a learning experiment. Implementing an idea
-gives a deeper understanding of the challenges than just reading about it.
-
-The appeal of decision diagrams for discrete optimization is two-fold:
+The package is mostly written as a learning experiment.
+The appeal (for me) of using decision diagrams to solve discrete optimization
+problems is two-fold:
 
 1. The simplicity of the algorithm makes implementation from scratch a
    reasonable endeavor.
