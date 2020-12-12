@@ -1,10 +1,12 @@
-[![](docs/src/assets/logo.svg)](https://github.com/rschwarz/Diderot.jl)
+# Diderot.jl
+
+<img align="right" src="docs/src/assets/logo.svg">
 
 Decision Diagrams for Discrete Optimization in Julia.
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://rschwarz.github.io/Diderot.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://rschwarz.github.io/Diderot.jl/dev)
-[![Build Status](https://travis-ci.com/rschwarz/Diderot.jl.svg?branch=master)](https://travis-ci.com/rschwarz/Diderot.jl)
+[![Build Status](https://github.com/rschwarz/Diderot.jl/workflows/CI/badge.svg?branch=master)](https://github.com/rschwarz/Diderot.jl/actions?query=workflow%3ACI)
 [![Codecov](https://codecov.io/gh/rschwarz/Diderot.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/rschwarz/Diderot.jl)
 
 Provides a generic implementation of decision diagrams (top-down construction
