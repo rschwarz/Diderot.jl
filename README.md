@@ -19,7 +19,7 @@ are dispatched on the user-defined types for the instance, describing the states
 and transitions.
 
 The solver behavior (restrictions, relaxations, variable order, diagram width)
-can also be fully customized through user-defined layer processing.
+can be fully customized through user-defined layer processing.
 
 ## Motivation
 
@@ -35,7 +35,7 @@ problems is two-fold:
 ## Limitations
 
 This is (still) mostly a naive text book implementation. I'm sure there's room
-for improvement in the choice of data structures and avoing frequent allocation.
+for improvement in the choice of data structures and avoiding frequent allocations.
 
 It's currently assumed that the objective function is to be maximized, and the
 transition values are combined by addition. That is, we're looking for a longest
@@ -47,13 +47,13 @@ parametrization.
 The decision diagram does not keep all transition arcs, but computes the longest
 path on the fly. That is, after a new layer is created, each node only remembers
 a single ingoing arc. This simplification works OK for the purpose of finding an
-optimal solution, but it rules out other use cases, such as enumeration of
+optimal solution, but it rules out other use cases such as the enumeration of
 feasible solutions or post-optimality analysis.
 
 ## Problem Classes
 
-Models and methods for some specific problem classes are also implemented in the
-context of this package as submodules. The main motivation is test-driving the
+Models and methods for some specific problem classes are implemented in the
+context of this package as submodules. The main motivation is to test-drive the
 current API, to make sure it's sufficiently general and not too verbose.
 
 Currently included are:
